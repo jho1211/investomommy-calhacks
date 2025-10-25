@@ -1,0 +1,272 @@
+[
+  {
+    "ticker": "TSLA",
+    "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
+    "datetime": 1761360240,
+    "sentiment": "positive",
+    "confidence": 0.9998,
+    "url": "https://finnhub.io/api/news?id=bfc31fe75b5c863d4c55d411cce0ba9692135739721c602056ed365e303b723a",
+    "summary": "Corporate earnings were the primary market driver this week, fueling sector-specific rallies and helping equities reclaim record levels."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "YTSL:CA: High Yield, Higher Risk - Why The Math Doesn't Work",
+    "datetime": 1761345894,
+    "sentiment": "positive",
+    "confidence": 0.8733,
+    "url": "https://finnhub.io/api/news?id=a5077de7de552b89d99aa0719c41ca3119e11b5590cb769b32f472f70563ef07",
+    "summary": "The Tesla Yield Shares Purpose ETF (YTSL:CA) may underperform TSLA stock, with insights on leveraged ETF risks. Read here for more analysis."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Garrett Is Still A Bargain Even After A Blowout Report",
+    "datetime": 1761325997,
+    "sentiment": "negative",
+    "confidence": 0.8592,
+    "url": "https://finnhub.io/api/news?id=035642ae99c6f3400982c450ae56a5d2a4a9bcdb33716b2e954a6f7403d3edf0",
+    "summary": "Garrett Motion remains cheap despite a significant increase, and the market might be waking up. Click here to find out why GTX stock is a Buy."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909,
+    "url": "https://finnhub.io/api/news?id=ef4bdd44424649eba467c52814161760ca28d44a65804662acbd6811f2ad9d39",
+    "summary": "Tesla headlines this week. GM pops, Netflix slides. AI earnings coming."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Tesla: The Dream Factory On Wall Street",
+    "datetime": 1761301556,
+    "sentiment": "positive",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=a9e95e4b34694ae93c4db9f6c3a905dc96fb45fc2c2cf375616d2a7d99b38214",
+    "summary": "Tesla faces declining core business performance, with Q3 net income down 37% and operating margins falling sharply year-over-year. See why TSLA stock is a Sell."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "BUZZ Investing: BUZZ Index Surges As Fed Cut And AI Leaders Drive Gains",
+    "datetime": 1761289740,
+    "sentiment": "neutral",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=f23d23032a0ffe77622d22745022a4c0ef87459662fa23391d57efb21957ffae",
+    "summary": "Markets rallied on the Federal Reserve\u00e2\u0080\u0099s rate cut and hints at further easing amid soft labor data."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Tesla: On A Mission To Accelerate The World's Transition",
+    "datetime": 1761253200,
+    "sentiment": "neutral",
+    "confidence": 0.9933,
+    "url": "https://finnhub.io/api/news?id=8a4e829fcc9a021c0c1be3e90c6c2fbcac0e1268bc49d5708a0b7ccf6e98bf03",
+    "summary": "Rowan Street Capital adds Tesla, citing its founder-led edge and long-term potential. Explore why they believe it's still early innings for this transformative bet."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399,
+    "url": "https://finnhub.io/api/news?id=44e03b6a981aad77ed6de8b1389874fbeda9febc3644878dc9547532932c74dd",
+    "summary": "Southeastern highlights resilient earnings, strategic mergers, and value-driven buybacks across key holdings. Read Longleaf Partners Fund\u00e2\u0080\u0099s Q3 insights to stay ahead."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Stock Market Today: Dow, Nasdaq Pick Up Steam; Tesla Rebounds As This Energy Name Jumps (Live Coverage)",
+    "datetime": 1761242750,
+    "sentiment": "neutral",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=d23eebd67cb8e29a6e97ddce9bfd4982304e67ed6d1c8762712dfa28fb7183f4",
+    "summary": "The Dow Jones index boosts its gains. Tesla makes a big reversal after earnings while an aluminum name soars."
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Ford Q3 earnings preview: Big 3 automaker's exposure to aluminum plant fire, tariffs key for investors",
+    "datetime": 1761242604,
+    "sentiment": "negative",
+    "confidence": 0.9635,
+    "url": "https://finnhub.io/api/news?id=4fdd768ad368f5611610f5e40c3503106d087d8ac7ae1ec08f9b198b67ca2d7f",
+    "summary": "Big Three automaker Ford is on deck to report third quarter results, with particular focus on an aluminum plant fire that may impact the company's franchise F-150 sales. Ford is also expected to give investors more details on the impact of President Trump's auto tariffs."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
+    "datetime": 1761390000,
+    "sentiment": "positive",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=d5db441f4ccd9be07a8c416bf0dd115788548310d8ae67d27bbe6f36a1335745",
+    "summary": "This week will witness earnings releases from the Magnificent 7 stocks. Investors will await news from Trump-Xi meeting. Read here for more details."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "MP Materials: Rare Earth Exuberance Well Warranted But Prematurely Priced-In",
+    "datetime": 1761382800,
+    "sentiment": "neutral",
+    "confidence": 0.9981,
+    "url": "https://finnhub.io/api/news?id=e4cfc4e56f0f82d5f31fc758540dd78d1abd21ab74faba863447ebd65ae8b9d9",
+    "summary": "MP benefits from its unique U.S. rare earth position and key partnerships but faces near-term output and valuation challenges. Find out why MP stock is a hold."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
+    "datetime": 1761360240,
+    "sentiment": "positive",
+    "confidence": 0.9998,
+    "url": "https://finnhub.io/api/news?id=bfc31fe75b5c863d4c55d411cce0ba9692135739721c602056ed365e303b723a",
+    "summary": "Corporate earnings were the primary market driver this week, fueling sector-specific rallies and helping equities reclaim record levels."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Apple Q4 Earnings Preview: $4 Trillion Market Capitalization Ahead",
+    "datetime": 1761324622,
+    "sentiment": "neutral",
+    "confidence": 0.578,
+    "url": "https://finnhub.io/api/news?id=190eaba80a2f257950a6d482d556a6874a6b55cfbf2a39f7ff42681938c9f610",
+    "summary": "Apple\u00e2\u0080\u0099s FQ4 earnings, strong service growth, and buybacks could push its market cap past $4T. Read the latest outlook on the stock ahead of upcoming earnings here."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909,
+    "url": "https://finnhub.io/api/news?id=ef4bdd44424649eba467c52814161760ca28d44a65804662acbd6811f2ad9d39",
+    "summary": "Tesla headlines this week. GM pops, Netflix slides. AI earnings coming."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
+    "datetime": 1761312128,
+    "sentiment": "neutral",
+    "confidence": 0.9784,
+    "url": "https://finnhub.io/api/news?id=474374c3dc3a27ef3aeaf1eb4fe140244e24dc3d5da85773c2223de916474bdf",
+    "summary": "Discover how Google's cloud and AI advances are driving stock growth and market share gains."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399,
+    "url": "https://finnhub.io/api/news?id=44e03b6a981aad77ed6de8b1389874fbeda9febc3644878dc9547532932c74dd",
+    "summary": "Southeastern highlights resilient earnings, strategic mergers, and value-driven buybacks across key holdings. Read Longleaf Partners Fund\u00e2\u0080\u0099s Q3 insights to stay ahead."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "The Market Loves Junk Stocks. How to Avoid Getting Taken Out With the Trash.",
+    "datetime": 1761239700,
+    "sentiment": "positive",
+    "confidence": 0.9599,
+    "url": "https://finnhub.io/api/news?id=97722c65a12670ede4bf9bfce0983801de5a877ac29a571cbd54fd1a87c6a1db",
+    "summary": "It\u2019s a stock market only a sanitation worker could love.  Of late, investors scrounging for stocks have preferred junk\u2014smaller companies with poor fundamentals and exorbitant valuations\u2014over quality companies with healthy sales and earnings growth, solid balance sheets, and more attractive prices.  Goldman Sachs pointed out in a recent report that a basket of heavily shorted stocks, often considered the trashiest of the trash, had surged 24% in just the past month."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Tech, Media & Telecom Roundup: Market Talk",
+    "datetime": 1761236760,
+    "sentiment": "positive",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=285bc0affd4ec8f69e1d0068fc5202ce78010ab6b7d588b57169dc6131513949",
+    "summary": "Find insight on IMB, T-Mobile and more in the latest Market Talks covering technology, media and telecom."
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Apple loses UK lawsuit over App Store commission charges",
+    "datetime": 1761235973,
+    "sentiment": "negative",
+    "confidence": 0.9986,
+    "url": "https://finnhub.io/api/news?id=d8106a2dddf154397dbb2b0a801addd1f2fcb69a7ac7e193fa651d868d70302b",
+    "summary": "Investing.com -- Apple has lost a lawsuit in London that accused the tech giant of abusing its dominant market position by charging app developers a 30% commission through its App Store."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
+    "datetime": 1761390000,
+    "sentiment": "positive",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=d5db441f4ccd9be07a8c416bf0dd115788548310d8ae67d27bbe6f36a1335745",
+    "summary": "This week will witness earnings releases from the Magnificent 7 stocks. Investors will await news from Trump-Xi meeting. Read here for more details."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "The Utterly Tranquil Feeling Of Watching Your Passive Income Grow",
+    "datetime": 1761380100,
+    "sentiment": "neutral",
+    "confidence": 0.929,
+    "url": "https://finnhub.io/api/news?id=e215b5c53acd43b2883f18a7a63de6218f40a6f0b8506efc901acd69aa151d66",
+    "summary": "Dividend investing in healthcare, REITs, and energy sectors offers steady income, growth, and peace of mind. Learn why dividend investing builds long-term wealth."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "How To Retire Early",
+    "datetime": 1761379200,
+    "sentiment": "positive",
+    "confidence": 0.9997,
+    "url": "https://finnhub.io/api/news?id=6ef5831cba74346d18823f3917d20a0dd2cc97b3578af384ccb85e00babda382",
+    "summary": "Discover how much you need to retire early and smart investment strategies to achieve it. Click for more on a strategy and securities to make your dreams come true."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "AI's Potential To Decimate The Jobs Market",
+    "datetime": 1761318183,
+    "sentiment": "neutral",
+    "confidence": 0.9995,
+    "url": "https://finnhub.io/api/news?id=4b8082a962db0fcb73ba5ecab92695d04e51a4094ee4c7d8d68047f0bd372028",
+    "summary": "AI stocks like NVIDIA and Microsoft are driving market gains, but AI could have profound impacts on our economy. Learn more about these concerns."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909,
+    "url": "https://finnhub.io/api/news?id=ef4bdd44424649eba467c52814161760ca28d44a65804662acbd6811f2ad9d39",
+    "summary": "Tesla headlines this week. GM pops, Netflix slides. AI earnings coming."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
+    "datetime": 1761312128,
+    "sentiment": "neutral",
+    "confidence": 0.9784,
+    "url": "https://finnhub.io/api/news?id=474374c3dc3a27ef3aeaf1eb4fe140244e24dc3d5da85773c2223de916474bdf",
+    "summary": "Discover how Google's cloud and AI advances are driving stock growth and market share gains."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Meta Blinks On AI",
+    "datetime": 1761292117,
+    "sentiment": "positive",
+    "confidence": 0.9971,
+    "url": "https://finnhub.io/api/news?id=118421eaf44d0a050b623bd4eb398893f67c56a865261961788205c87681d92a",
+    "summary": "Meta Blinks On AI"
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399,
+    "url": "https://finnhub.io/api/news?id=44e03b6a981aad77ed6de8b1389874fbeda9febc3644878dc9547532932c74dd",
+    "summary": "Southeastern highlights resilient earnings, strategic mergers, and value-driven buybacks across key holdings. Read Longleaf Partners Fund\u00e2\u0080\u0099s Q3 insights to stay ahead."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Cloudflare: Growth Will Disappoint Long Term",
+    "datetime": 1761247256,
+    "sentiment": "negative",
+    "confidence": 1.0,
+    "url": "https://finnhub.io/api/news?id=183c1c0b24d42095389c91e33f54d4d329f1183fc037f17a54c8f26b7add6f67",
+    "summary": "Cloudflare faces slowing growth, tough SASE competition, and overvaluation risks. Click here to read my latest analysis of NET stock."
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Intel Q3 2025 Earnings Double Beat: The Devil Is In The Details (Downgrade)",
+    "datetime": 1761244875,
+    "sentiment": "neutral",
+    "confidence": 0.9456,
+    "url": "https://finnhub.io/api/news?id=22d6c68187c0412555d0d395ba977857cb0f54d1a5d8685fe5103a1a79a6829c",
+    "summary": "Intel Corporation posted strong Q3 earnings, but concerns over future growth, demand, and competition linger. Click here to read my analysis of INTC stock."
+  }
+]

@@ -6,6 +6,7 @@ Output JSON in the following format:
 [
   {
     "headline": "...",
+    "url": "..."
     "summary": "...",
     "sentiment": "positive|neutral|negative",
     "confidence": 0.00

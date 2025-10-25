@@ -70,6 +70,76 @@
     "confidence": 0.9635
   },
   {
+    "ticker": "AAPL",
+    "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
+    "datetime": 1761390000,
+    "sentiment": "positive",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "MP Materials: Rare Earth Exuberance Well Warranted But Prematurely Priced-In",
+    "datetime": 1761382800,
+    "sentiment": "neutral",
+    "confidence": 0.9981
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
+    "datetime": 1761360240,
+    "sentiment": "positive",
+    "confidence": 0.9998
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Apple Q4 Earnings Preview: $4 Trillion Market Capitalization Ahead",
+    "datetime": 1761324622,
+    "sentiment": "neutral",
+    "confidence": 0.578
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
+    "datetime": 1761312128,
+    "sentiment": "neutral",
+    "confidence": 0.9784
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "The Market Loves Junk Stocks. How to Avoid Getting Taken Out With the Trash.",
+    "datetime": 1761239700,
+    "sentiment": "positive",
+    "confidence": 0.9599
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Tech, Media & Telecom Roundup: Market Talk",
+    "datetime": 1761236760,
+    "sentiment": "positive",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "AAPL",
+    "headline": "Apple loses UK lawsuit over App Store commission charges",
+    "datetime": 1761235973,
+    "sentiment": "negative",
+    "confidence": 0.9986
+  },
+  {
     "ticker": "MSFT",
     "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
     "datetime": 1761390000,
@@ -140,73 +210,73 @@
     "confidence": 0.9456
   },
   {
-    "ticker": "GOOGL",
-    "headline": "The Utterly Tranquil Feeling Of Watching Your Passive Income Grow",
-    "datetime": 1761380100,
-    "sentiment": "neutral",
-    "confidence": 0.929
+    "ticker": "AMZN",
+    "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
+    "datetime": 1761390000,
+    "sentiment": "positive",
+    "confidence": 1.0
   },
   {
-    "ticker": "GOOGL",
+    "ticker": "AMZN",
     "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
     "datetime": 1761360240,
     "sentiment": "positive",
     "confidence": 0.9998
   },
   {
-    "ticker": "GOOGL",
-    "headline": "Wall Street Roundup: Are We In A Bubble?",
-    "datetime": 1761312300,
-    "sentiment": "positive",
-    "confidence": 0.9909
-  },
-  {
-    "ticker": "GOOGL",
-    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
-    "datetime": 1761312128,
+    "ticker": "AMZN",
+    "headline": "AI's Potential To Decimate The Jobs Market",
+    "datetime": 1761318183,
     "sentiment": "neutral",
-    "confidence": 0.9784
+    "confidence": 0.9995
   },
   {
-    "ticker": "GOOGL",
-    "headline": "Trump Administration Exploring Quantum Bets, Alphabet Remains My Play",
-    "datetime": 1761302562,
-    "sentiment": "positive",
-    "confidence": 0.9258
-  },
-  {
-    "ticker": "GOOGL",
-    "headline": "Alphabet: Brace For Strong Q3 Earnings",
-    "datetime": 1761295411,
-    "sentiment": "neutral",
-    "confidence": 1.0
-  },
-  {
-    "ticker": "GOOGL",
+    "ticker": "AMZN",
     "headline": "Meta Blinks On AI",
     "datetime": 1761292117,
     "sentiment": "positive",
     "confidence": 0.9971
   },
   {
-    "ticker": "GOOGL",
-    "headline": "Understanding Europe's Lag In The AI-Led Equity Landscape",
-    "datetime": 1761272100,
-    "sentiment": "negative",
-    "confidence": 0.9987
+    "ticker": "AMZN",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399
   },
   {
-    "ticker": "GOOGL",
+    "ticker": "AMZN",
     "headline": "Cloudflare: Growth Will Disappoint Long Term",
     "datetime": 1761247256,
     "sentiment": "negative",
     "confidence": 1.0
   },
   {
-    "ticker": "GOOGL",
-    "headline": "Prediction: Alphabet Will Be Worth More Than Microsoft by 2030",
-    "datetime": 1761241740,
+    "ticker": "AMZN",
+    "headline": "Amazon Offers New AI Shopping Tool After OpenAI-Walmart Team-Up",
+    "datetime": 1761243100,
+    "sentiment": "positive",
+    "confidence": 0.9892
+  },
+  {
+    "ticker": "AMZN",
+    "headline": "Elizabeth Warren Warns GENIUS Act Could 'Blow Up Our Entire Financial System' Without Tougher Rules",
+    "datetime": 1761242463,
+    "sentiment": "negative",
+    "confidence": 0.947
+  },
+  {
+    "ticker": "AMZN",
+    "headline": "Unifor serves Amazon notice to bargain",
+    "datetime": 1761240120,
     "sentiment": "positive",
     "confidence": 0.9999
+  },
+  {
+    "ticker": "AMZN",
+    "headline": "Billionaire Charlie Munger Said 'The Hard Part' Of Getting Rich Is Saving The First $100,000. But He Found People Who Get There Fast Share 3 Traits",
+    "datetime": 1761238864,
+    "sentiment": "positive",
+    "confidence": 0.9878
   }
 ]

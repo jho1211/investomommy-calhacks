@@ -19,12 +19,5 @@
     "positive_ratio": 0.4,
     "neutral_ratio": 0.5,
     "negative_ratio": 0.1
-  },
-  {
-    "ticker": "AMZN",
-    "total_articles": 10,
-    "positive_ratio": 0.6,
-    "neutral_ratio": 0.2,
-    "negative_ratio": 0.2
   }
 ]

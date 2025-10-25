@@ -122,7 +122,7 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <div className="inline-block bg-primary/10 px-8 py-4 rounded-2xl border-2 border-primary/20 mb-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-primary tracking-wider">{ticker}</h1>
+            <h1 className="text-4xl md:text-6xl font-bold text-foreground tracking-wider">{ticker}</h1>
           </div>
           <p className="text-muted-foreground text-lg">Comprehensive Stock Analysis</p>
         </div>

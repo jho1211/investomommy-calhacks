@@ -1,11 +1,12 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Scale, TrendingUp, BarChart3, Newspaper, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -14,6 +15,27 @@ const Dashboard = () => {
   const [openDetail, setOpenDetail] = useState<DetailType>(null);
   const [showComparePicker, setShowComparePicker] = useState(false);
   const [selectedComparisonTicker, setSelectedComparisonTicker] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Show toast notification prompting user to select comparison stock
+    if (!selectedComparisonTicker) {
+      const timer = setTimeout(() => {
+        toast({
+          title: "Action Required",
+          description: `Select a comparable stock to analyze ${ticker} using Relative Valuation`,
+          action: (
+            <Button variant="secondary" size="sm" onClick={() => setShowComparePicker(true)}>
+              Select Stock
+            </Button>
+          ),
+          duration: 8000,
+        });
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [ticker, selectedComparisonTicker, toast]);
 
   // Mock data - will be replaced with real sector data from backend
   const comparableTickers = [
@@ -32,6 +54,10 @@ const Dashboard = () => {
   const handleComparisonSelect = (symbol: string) => {
     setSelectedComparisonTicker(symbol);
     setShowComparePicker(false);
+    toast({
+      title: "Comparison Stock Selected",
+      description: `Now comparing ${ticker} with ${symbol}`,
+    });
     // Analysis will be triggered here when backend is connected
   };
 

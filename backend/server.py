@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
-from model import calculate_stock_multiples, run_monte_carlo, get_userlist
+from model import calculate_stock_multiples, run_monte_carlo, insert_user_ticker
+from query import fetch_userlist
 
 app = FastAPI()
 
@@ -14,7 +15,17 @@ def get_multiples_for_stock(
 def get_user_list(
     uid: str = Query(..., description="User ID")
 ):
-    return get_userlist(uid)
+    return fetch_userlist(uid)
+
+@app.post("/userlist")
+def add_to_user_list(
+    uid: str = Query(..., description="User ID"),
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+):
+    try:
+        return insert_user_ticker(uid, ticker)
+    except Exception as e:
+        return {"error": str(e)}    
 
 @app.get("/montecarlo")
 async def montecarlo_endpoint(

@@ -13,3 +13,15 @@ def fetch_userlist(uid: str):
     if data:
         return [item['ticker'] for item in data]
     return []
+
+def check_ticker_exists(ticker: str) -> bool:
+    response = supabase.table("ticker").select("ticker").eq("ticker", ticker).execute()
+    data = response.data
+    return len(data) > 0
+
+def add_ticker(ticker: str, company_name: str):
+    if not check_ticker_exists(ticker):
+        supabase.table("ticker").insert({"ticker": ticker, "company_name": company_name}).execute()
+
+def add_user_ticker(uid: str, ticker: str):
+    supabase.table("userticker").insert({"uid": uid, "ticker": ticker}).execute()

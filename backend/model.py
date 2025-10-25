@@ -1,6 +1,14 @@
 import requests
-from config import FMP_API_KEY, BALANCE_SHEET_API_URL, INCOME_STATEMENT_API_URL, KEY_METRICS_API_URL, EMPLOYEE_COUNT_API_URL, supabase
-from query import fetch_multiples, fetch_userlist
+from config import (
+    FMP_API_KEY, 
+    BALANCE_SHEET_API_URL, 
+    INCOME_STATEMENT_API_URL, 
+    KEY_METRICS_API_URL, 
+    EMPLOYEE_COUNT_API_URL, 
+    COMPANY_SEARCH_API_URL,
+    supabase
+)
+from query import fetch_multiples, fetch_userlist, check_ticker_exists, add_ticker, add_user_ticker
 import io
 import base64
 import yfinance as yf
@@ -8,9 +16,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("Agg")
-
-def get_userlist(uid: str):
-    return fetch_userlist(uid)
 
 def calculate_stock_multiples(ticker):
     existing_multiples = fetch_multiples(ticker)
@@ -149,3 +154,14 @@ def run_monte_carlo(
             "n_paths": n_paths,
         },
     }
+
+def insert_user_ticker(uid: str, ticker: str):
+    userlist = fetch_userlist(uid)
+    if ticker not in userlist:
+        if not check_ticker_exists(ticker):
+            company_info = requests.get(COMPANY_SEARCH_API_URL.format(ticker, FMP_API_KEY)).json()[0]
+            add_ticker(ticker, company_info.get("name", "Unknown Company"))
+        add_user_ticker(uid, ticker)
+        return {"message": "Ticker added to user list"}
+    else:
+        return {"message": "Ticker already in user list"}

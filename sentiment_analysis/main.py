@@ -1,6 +1,6 @@
 import os
 import json
-import requests
+import requests 
 import torch
 from supabase import create_client
 from datetime import date, timedelta

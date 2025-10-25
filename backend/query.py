@@ -35,3 +35,15 @@ def get_research_data(ticker):
     if data:
         return data[0]
     return None
+
+# --- News Sentiment Queries ---
+def fetch_news_sentiment(ticker: str):
+    """Fetch detailed sentiment rows for a given ticker from 'newssentiment'."""
+    res = supabase.table("newssentiment").select("*").eq("ticker", ticker).execute()
+    return res.data if res.data else []
+
+
+def fetch_overall_news_sentiment(ticker: str):
+    """Fetch overall aggregated sentiment for a given ticker from 'overallnewssentiment'."""
+    res = supabase.table("overallnewssentiment").select("*").eq("ticker", ticker).execute()
+    return res.data if res.data else []

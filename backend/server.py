@@ -5,7 +5,9 @@ from model import (
     calculate_stock_multiples, 
         run_monte_carlo, 
         insert_user_ticker, 
-    generate_research_brief
+    generate_research_brief,
+    get_news_sentiment,
+    get_overall_news_sentiment
 )
 from query import fetch_userlist
 
@@ -73,3 +75,12 @@ def research_endpoint(
         return generate_research_brief(ticker)
     except Exception as e:
         return {"error": str(e)}
+    
+@app.get("/news-sentiment/{ticker}")
+def news_sentiment_endpoint(ticker: str):
+    return get_news_sentiment(ticker.upper())
+
+
+@app.get("/overall-news-sentiment/{ticker}")
+def overall_news_sentiment_endpoint(ticker: str):
+    return get_overall_news_sentiment(ticker.upper())

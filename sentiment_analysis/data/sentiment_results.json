@@ -1,0 +1,212 @@
+[
+  {
+    "ticker": "TSLA",
+    "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
+    "datetime": 1761360240,
+    "sentiment": "positive",
+    "confidence": 0.9998
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "YTSL:CA: High Yield, Higher Risk - Why The Math Doesn't Work",
+    "datetime": 1761345894,
+    "sentiment": "positive",
+    "confidence": 0.8733
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Garrett Is Still A Bargain Even After A Blowout Report",
+    "datetime": 1761325997,
+    "sentiment": "negative",
+    "confidence": 0.8592
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Tesla: The Dream Factory On Wall Street",
+    "datetime": 1761301556,
+    "sentiment": "positive",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "BUZZ Investing: BUZZ Index Surges As Fed Cut And AI Leaders Drive Gains",
+    "datetime": 1761289740,
+    "sentiment": "neutral",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Tesla: On A Mission To Accelerate The World's Transition",
+    "datetime": 1761253200,
+    "sentiment": "neutral",
+    "confidence": 0.9933
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Stock Market Today: Dow, Nasdaq Pick Up Steam; Tesla Rebounds As This Energy Name Jumps (Live Coverage)",
+    "datetime": 1761242750,
+    "sentiment": "neutral",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "TSLA",
+    "headline": "Ford Q3 earnings preview: Big 3 automaker's exposure to aluminum plant fire, tariffs key for investors",
+    "datetime": 1761242604,
+    "sentiment": "negative",
+    "confidence": 0.9635
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Microsoft, Meta Set To Report Earnings As Investors Watch Out For Trump-Xi, Fed Meeting",
+    "datetime": 1761390000,
+    "sentiment": "positive",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "The Utterly Tranquil Feeling Of Watching Your Passive Income Grow",
+    "datetime": 1761380100,
+    "sentiment": "neutral",
+    "confidence": 0.929
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "How To Retire Early",
+    "datetime": 1761379200,
+    "sentiment": "positive",
+    "confidence": 0.9997
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "AI's Potential To Decimate The Jobs Market",
+    "datetime": 1761318183,
+    "sentiment": "neutral",
+    "confidence": 0.9995
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
+    "datetime": 1761312128,
+    "sentiment": "neutral",
+    "confidence": 0.9784
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Meta Blinks On AI",
+    "datetime": 1761292117,
+    "sentiment": "positive",
+    "confidence": 0.9971
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "7 Stocks Taking The Next Step To Be On Offense",
+    "datetime": 1761247800,
+    "sentiment": "neutral",
+    "confidence": 0.9399
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Cloudflare: Growth Will Disappoint Long Term",
+    "datetime": 1761247256,
+    "sentiment": "negative",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "MSFT",
+    "headline": "Intel Q3 2025 Earnings Double Beat: The Devil Is In The Details (Downgrade)",
+    "datetime": 1761244875,
+    "sentiment": "neutral",
+    "confidence": 0.9456
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "The Utterly Tranquil Feeling Of Watching Your Passive Income Grow",
+    "datetime": 1761380100,
+    "sentiment": "neutral",
+    "confidence": 0.929
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "This Week In Markets: Earnings, Inflation, And Geopolitical Shifts",
+    "datetime": 1761360240,
+    "sentiment": "positive",
+    "confidence": 0.9998
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Wall Street Roundup: Are We In A Bubble?",
+    "datetime": 1761312300,
+    "sentiment": "positive",
+    "confidence": 0.9909
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Alphabet Q3 2025 Earnings Preview: Anthropic Deal Signals Next Phase Of Cloud Acceleration",
+    "datetime": 1761312128,
+    "sentiment": "neutral",
+    "confidence": 0.9784
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Trump Administration Exploring Quantum Bets, Alphabet Remains My Play",
+    "datetime": 1761302562,
+    "sentiment": "positive",
+    "confidence": 0.9258
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Alphabet: Brace For Strong Q3 Earnings",
+    "datetime": 1761295411,
+    "sentiment": "neutral",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Meta Blinks On AI",
+    "datetime": 1761292117,
+    "sentiment": "positive",
+    "confidence": 0.9971
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Understanding Europe's Lag In The AI-Led Equity Landscape",
+    "datetime": 1761272100,
+    "sentiment": "negative",
+    "confidence": 0.9987
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Cloudflare: Growth Will Disappoint Long Term",
+    "datetime": 1761247256,
+    "sentiment": "negative",
+    "confidence": 1.0
+  },
+  {
+    "ticker": "GOOGL",
+    "headline": "Prediction: Alphabet Will Be Worth More Than Microsoft by 2030",
+    "datetime": 1761241740,
+    "sentiment": "positive",
+    "confidence": 0.9999
+  }
+]

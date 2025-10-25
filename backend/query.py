@@ -25,3 +25,13 @@ def add_ticker(ticker: str, company_name: str):
 
 def add_user_ticker(uid: str, ticker: str):
     supabase.table("userticker").insert({"uid": uid, "ticker": ticker}).execute()
+
+def insert_research_data(ticker: str, research_data: dict):
+    supabase.table("researchanalysis").insert({"ticker": ticker, "analysis_data": research_data}).execute()
+
+def get_research_data(ticker):
+    response = supabase.table("researchanalysis").select("analysis_data", "analysis_date", "created_at").eq("ticker", ticker).order("analysis_date", desc=True).execute()
+    data = response.data
+    if data:
+        return data[0]
+    return None

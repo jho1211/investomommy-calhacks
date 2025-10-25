@@ -10,7 +10,15 @@ from config import (
     COMPANY_SEARCH_API_URL,
     supabase
 )
-from query import fetch_multiples, fetch_userlist, check_ticker_exists, add_ticker, add_user_ticker
+from query import (
+    fetch_multiples, 
+    fetch_userlist, 
+    check_ticker_exists, 
+    add_ticker, 
+    add_user_ticker, 
+    insert_research_data,
+    get_research_data
+)
 import io
 import base64
 import yfinance as yf
@@ -169,6 +177,10 @@ def insert_user_ticker(uid: str, ticker: str):
         return {"message": "Ticker already in user list"}
     
 def generate_research_brief(ticker: str) -> str:
+    cur_research_data = get_research_data(ticker)
+    if cur_research_data is not None:
+        return cur_research_data
+
     prompt = f"""
     You are a financial writer for beginners, similar in tone to the Wall Street Journal or Investopedia.
     Write a structured, beginner-friendly equity research report for the company with ticker symbol ({ticker}).
@@ -251,4 +263,5 @@ def generate_research_brief(ticker: str) -> str:
         return parts
 
     sections = {k: to_paragraphs(extract_block(k, raw)) for k in KEYS}
-    return sections
+    insert_research_data(ticker, sections)
+    return get_research_data(ticker)

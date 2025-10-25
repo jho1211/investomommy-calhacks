@@ -49,24 +49,43 @@ type MonteCarloData = {
   };
 };
 
+type ResearchData = {
+  analysis_date: string;
+  analysis_data: {
+    company_overview: string[];
+    business_segments: string[];
+    revenue_characteristics: string[];
+    geographic_breakdown: string[];
+    stakeholders: string[];
+    key_performance_indicators: string[];
+    valuation: string[];
+    recent_news: string[];
+    forensic_red_flags: string[];
+  };
+  created_at: string;
+};
+
 type AnalysisData = {
   ticker: string;
   multiples: MultiplesData | null;
   montecarlo: MonteCarloData | null;
+  research: ResearchData | null;
 };
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
   try {
-    // Fetch both multiples and monte carlo data in parallel
-    const [multiplesResponse, montecarloResponse] = await Promise.all([
+    // Fetch multiples, monte carlo, and research data in parallel
+    const [multiplesResponse, montecarloResponse, researchResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
     ]);
 
     let multiples: MultiplesData | null = null;
     let montecarlo: MonteCarloData | null = null;
+    let research: ResearchData | null = null;
 
     // Parse multiples data if successful
     if (multiplesResponse.ok) {
@@ -78,12 +97,18 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       montecarlo = await montecarloResponse.json();
     }
 
-    // Return analysis data even if one or both endpoints fail
+    // Parse research data if successful
+    if (researchResponse.ok) {
+      research = await researchResponse.json();
+    }
+
+    // Return analysis data even if one or more endpoints fail
     // This allows partial data to be displayed
     return {
       ticker: ticker.toUpperCase(),
       multiples,
       montecarlo,
+      research,
     };
   } catch (error) {
     console.error("Error fetching analysis data:", error);

@@ -188,12 +188,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               {!selectedComparisonTicker ? (
-                <div className="bg-secondary/30 p-4 rounded-lg mb-4 border-2 border-dashed border-primary/30">
+                <div className="bg-secondary/30 p-4 rounded-lg mb-4 border-2 border-dashed border-dashed border-red-400">
                   <div className="flex items-center gap-2 mb-2">
-                    <ArrowRight className="h-5 w-5 text-primary animate-pulse" />
-                    <p className="text-sm font-medium">Action Required</p>
+                    <ArrowRight className="h-5 w-5 text-red-600 animate-pulse" />
+                    <p className="text-sm font-medium text-red-700">Action Required</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-red-600">
                     Select a comparable stock to begin analysis
                   </p>
                 </div>

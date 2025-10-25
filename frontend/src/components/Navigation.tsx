@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import logoImage from "@/assets/logo.png";
 
 const Navigation = () => {
   const location = useLocation();
@@ -15,7 +16,11 @@ const Navigation = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-            <TrendingUp className="h-6 w-6 text-primary" />
+            <img 
+              src={logoImage}
+              alt="Money Tree Logo"
+              className="h-10 w-8"
+            />
             <span>InvestoMommy</span>
           </Link>
           

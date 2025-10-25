@@ -1,7 +1,11 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Accessibility, BookCheck, Heart, User } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import jinaPhoto from "@/assets/headshots/jina.png";
+import jeffreyPhoto from "@/assets/headshots/jeffrey.png";
+import wehbePhoto from "@/assets/headshots/wehbe.png";
+import farrukhPhoto from "@/assets/headshots/farrukh.png"
 
 const About = () => {
   return (
@@ -65,6 +69,7 @@ const About = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={jinaPhoto} alt="Jina Yeom Headshot" />
                     <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                       <User className="h-12 w-12" />
                     </AvatarFallback>
@@ -74,6 +79,7 @@ const About = () => {
 
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={jeffreyPhoto} alt="Jeffrey Ho Headshot" />
                     <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                       <User className="h-12 w-12" />
                     </AvatarFallback>
@@ -83,6 +89,7 @@ const About = () => {
 
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={wehbePhoto} alt="Wehbe El Hadj Sidi Headshot" />
                     <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                       <User className="h-12 w-12" />
                     </AvatarFallback>
@@ -92,6 +99,7 @@ const About = () => {
 
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={farrukhPhoto} alt="Farrukh Akhatjonov Headshot" />
                     <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                       <User className="h-12 w-12" />
                     </AvatarFallback>

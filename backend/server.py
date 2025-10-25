@@ -4,13 +4,11 @@ from model import calculate_stock_multiples, run_monte_carlo
 
 app = FastAPI()
 
-@app.get("/multiples/{ticker}")
-def get_multiples_for_stock(ticker: str):
+@app.get("/multiples")
+def get_multiples_for_stock(
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+):
     return calculate_stock_multiples(ticker)
-
-@app.get("/montecarlo")
-def run_monte_carlo_simulation(ticker: str, num_simulations: int = 1000, years: int = 5):
-    return run_monte_carlo(ticker, n_paths=num_simulations, horizon_years=years)
 
 @app.get("/montecarlo")
 async def montecarlo_endpoint(

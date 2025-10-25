@@ -52,14 +52,7 @@ Follow these steps to create a Python virtual environment and install the projec
 	pip install -r requirements.txt
 	```
 
-5) Deactivate when done
-
+5) Run the server using
 	```
-	deactivate
+	fastapi dev server.py
 	```
-
-Notes
-- If you have multiple Python versions installed, use the `python`/`python3` executable that points to the intended interpreter.
-- Using `python -m pip install -r requirements.txt` is a safe alternative to ensure you're installing into the right environment.
-
-If you'd like, I can add quick commands for running the backend or development tips (e.g., environment variables). Just tell me what to include.

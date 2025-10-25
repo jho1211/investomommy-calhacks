@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Scale, TrendingUp, BarChart3, Newspaper, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import AddToWatchlistButton from "@/components/AddToWatchlistButton";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -34,6 +35,7 @@ const StockAnalysis = () => {
   // ✅ read the dynamic URL param :ticker
   const params = useParams<{ ticker?: string }>();
   const rawTicker = params.ticker;
+  
 
   // guard: if URL does not include a ticker, send to 404
   if (!rawTicker) return <Navigate to="/not-found" replace />;
@@ -214,6 +216,11 @@ const StockAnalysis = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-2">{ticker}</h1>
           <p className="text-muted-foreground">Comprehensive Stock Analysis</p>
         </div>
+        
+        <div className="mt-6 mb-10 flex justify-center">
+            <AddToWatchlistButton ticker={ticker} />
+        </div>
+
 
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* Relative Valuation Card */}

@@ -27,7 +27,7 @@ const AddToWatchlistButton = ({ ticker }: AddToWatchlistButtonProps) => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from("watchlist_stocks")
+        .from("userticker")
         .insert({
           user_id: user.id,
           ticker: ticker.toUpperCase(),

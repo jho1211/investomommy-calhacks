@@ -8,10 +8,10 @@ def fetch_multiples(ticker: str):
     return None
 
 def fetch_userlist(uid: str):
-    response = supabase.table("userticker").select("ticker").eq("uid", uid).execute()
+    response = supabase.table("userticker").select("ticker(ticker, company_name)").eq("uid", uid).execute()
     data = response.data
     if data:
-        return [item['ticker'] for item in data]
+        return [{"ticker": item['ticker']['ticker'], "company_name": item['ticker']['company_name']} for item in data]
     return []
 
 def check_ticker_exists(ticker: str) -> bool:

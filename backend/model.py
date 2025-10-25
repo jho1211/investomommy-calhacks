@@ -1,6 +1,6 @@
 import requests
 from config import FMP_API_KEY, BALANCE_SHEET_API_URL, INCOME_STATEMENT_API_URL, KEY_METRICS_API_URL, EMPLOYEE_COUNT_API_URL, supabase
-from query import fetch_multiples
+from query import fetch_multiples, fetch_userlist
 import io
 import base64
 import yfinance as yf
@@ -8,6 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("Agg")
+
+def get_userlist(uid: str):
+    return fetch_userlist(uid)
 
 def calculate_stock_multiples(ticker):
     existing_multiples = fetch_multiples(ticker)

@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, Accessibility, BookCheck, Heart } from "lucide-react";
+import { TrendingUp, Accessibility, BookCheck, Heart, User } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const About = () => {
   return (
@@ -58,7 +59,7 @@ const About = () => {
             </Card>
           </div>
 
-          <Card>
+          <Card className="mb-12">
             <CardContent className="pt-8">
               <h2 className="text-2xl font-bold mb-4">Our Story</h2>
               <div className="space-y-4 text-muted-foreground">
@@ -74,6 +75,49 @@ const About = () => {
                 <p>
                   With guidance, transparency, and a little reassurance, investing doesn't have to be so scary anymore.
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-8">
+              <h2 className="text-2xl font-bold text-center mb-8">Meet the Team</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24 mb-4">
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="font-medium text-center">Jina Yeom</p>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24 mb-4">
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="font-medium text-center">Jeffrey Ho</p>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24 mb-4">
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="font-medium text-center">Wehbe El Hadj Sidi</p>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24 mb-4">
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="font-medium text-center">Farrukh Akhatjonov</p>
+                </div>
               </div>
             </CardContent>
           </Card>

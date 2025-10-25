@@ -24,18 +24,6 @@ const Navigation = () => {
               Disclaimer
             </Link>
             <Link 
-              to="/analyze" 
-              className={`transition-colors ${isActive('/analyze') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Analyze a Stock
-            </Link>
-            <Link 
-              to="/dashboard" 
-              className={`transition-colors ${isActive('/dashboard') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Dashboard
-            </Link>
-            <Link 
               to="/how-it-works" 
               className={`transition-colors ${isActive('/how-it-works') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >

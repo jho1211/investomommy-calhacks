@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
@@ -7,6 +6,24 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AddToWatchlistButtonProps {
   ticker: string;
+}
+
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+async function addToWatchlist(uid: string, ticker: string): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/userlist?uid=${encodeURIComponent(uid)}&ticker=${encodeURIComponent(
+        ticker.toUpperCase()
+      )}`,
+      { method: "POST" } // no body needed if FastAPI is reading from query params
+    );
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error adding to watchlist:", error);
+    return false;
+  }
 }
 
 const AddToWatchlistButton = ({ ticker }: AddToWatchlistButtonProps) => {
@@ -18,45 +35,27 @@ const AddToWatchlistButton = ({ ticker }: AddToWatchlistButtonProps) => {
     if (!user) {
       toast({
         title: "Not logged in",
-        description: "Please log in to add stocks to your watchlist",
+        description: "Please log in to add stocks to your watchlist.",
         variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
-    try {
-      const { error } = await supabase
-        .from("userticker")
-        .insert({
-          user_id: user.id,
-          ticker: ticker.toUpperCase(),
-        });
+    const ok = await addToWatchlist(user.id, ticker);
+    setLoading(false);
 
-      if (error) {
-        if (error.code === "23505") {
-          toast({
-            title: "Already in watchlist",
-            description: `${ticker} is already in your watchlist`,
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Added to watchlist",
-          description: `${ticker} has been added to your watchlist`,
-        });
-      }
-    } catch (error) {
-      console.error("Error adding to watchlist:", error);
+    if (ok) {
+      toast({
+        title: "Added to watchlist",
+        description: `${ticker.toUpperCase()} has been added to your watchlist.`,
+      });
+    } else {
       toast({
         title: "Error",
-        description: "Failed to add stock to watchlist",
+        description: "Could not add to watchlist.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 

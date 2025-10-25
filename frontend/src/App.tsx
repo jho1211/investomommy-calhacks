@@ -11,6 +11,7 @@ import Analyze from "./pages/Analyze";
 import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
+import StockAnalysis from "./pages/StockAnalysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/dashboard/:ticker" element={<Dashboard />} />
             <Route path="/about" element={<About />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/dashboard/analysis/:tickerSymbol" element={<StockAnalysis />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

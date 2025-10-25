@@ -4,6 +4,17 @@ This repository contains the backend for InvestoMommy.
 
 ## Setup
 
+You will need the following values in your .env value
+```
+FMP_API_KEY="Get API key from the FMP site"
+BALANCE_SHEET_API_URL="https://financialmodelingprep.com/stable/balance-sheet-statement?symbol={}&apikey={}"
+INCOME_STATEMENT_API_URL="https://financialmodelingprep.com/stable/income-statement?symbol={}&apikey={}"
+KEY_METRICS_API_URL="https://financialmodelingprep.com/stable/key-metrics?symbol={}&apikey={}"
+EMPLOYEE_COUNT_API_URL="https://financialmodelingprep.com/stable/employee-count?symbol={}&apikey={}"
+SUPABASE_URL="Get Supabase URL from owner"
+SUPABASE_KEY="Get Suapbase key from owner"
+```
+
 Follow these steps to create a Python virtual environment and install the project's dependencies.
 
 1) Create a virtual environment

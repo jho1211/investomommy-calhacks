@@ -21,13 +21,13 @@ const Navigation = () => {
           
           <div className="hidden md:flex items-center gap-6">
             <Link 
-              to="/login" 
+              to={user ? "/dashboard" : "/login"}
               className={`transition-colors ${isActive('/dashboard') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Dashboard
             </Link>
             <Link 
-              to="/login" 
+              to={user ? "/analyze" : "/login"}
               className={`transition-colors ${isActive('/analyze') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Analyze Stock

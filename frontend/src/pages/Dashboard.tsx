@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Show toast notification prompting user to select comparison stock
+    // Show notification prompting user to select comparison stock
     if (!selectedComparisonTicker) {
       const timer = setTimeout(() => {
         toast({

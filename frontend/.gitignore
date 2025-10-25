@@ -22,3 +22,5 @@
 # Misc
 coverage.xml
 node_modules/
+
+.env

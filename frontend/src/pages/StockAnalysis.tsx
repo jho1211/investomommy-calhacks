@@ -65,27 +65,61 @@ type ResearchData = {
   created_at: string;
 };
 
+type NewsSentimentItem = {
+  id: number;
+  ticker: string;
+  headline: string;
+  summary: string | null;
+  url: string;
+  datetime: string;
+  sentiment: "positive" | "negative" | "neutral";
+  confidence: number;
+  created_at: string;
+};
+
+type OverallNewsSentiment = {
+  ticker: string;
+  date: string;
+  total_articles: number;
+  positive_ratio: number;
+  neutral_ratio: number;
+  negative_ratio: number;
+  created_at: string;
+};
+
 type AnalysisData = {
   ticker: string;
   multiples: MultiplesData | null;
   montecarlo: MonteCarloData | null;
   research: ResearchData | null;
+  newsSentiment: NewsSentimentItem[];
+  overallNewsSentiment: OverallNewsSentiment[];
 };
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
   try {
-    // Fetch multiples, monte carlo, and research data in parallel
-    const [multiplesResponse, montecarloResponse, researchResponse] = await Promise.all([
+    // Fetch all data in parallel
+    const [
+      multiplesResponse, 
+      montecarloResponse, 
+      researchResponse,
+      newsSentimentResponse,
+      overallNewsSentimentResponse
+    ] = await Promise.all([
       fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/news-sentiment?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/overall-news-sentiment?ticker=${encodeURIComponent(ticker)}`),
     ]);
 
     let multiples: MultiplesData | null = null;
     let montecarlo: MonteCarloData | null = null;
     let research: ResearchData | null = null;
+    let newsSentiment: NewsSentimentItem[] = [];
+    let overallNewsSentiment: OverallNewsSentiment | null = null;
 
     // Parse multiples data if successful
     if (multiplesResponse.ok) {
@@ -102,6 +136,16 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       research = await researchResponse.json();
     }
 
+    // Parse news sentiment data if successful
+    if (newsSentimentResponse.ok) {
+      newsSentiment = await newsSentimentResponse.json();
+    }
+
+    // Parse overall news sentiment data if successful
+    if (overallNewsSentimentResponse.ok) {
+      overallNewsSentiment = await overallNewsSentimentResponse.json();
+    }
+
     // Return analysis data even if one or more endpoints fail
     // This allows partial data to be displayed
     return {
@@ -109,6 +153,8 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       multiples,
       montecarlo,
       research,
+      newsSentiment,
+      overallNewsSentiment,
     };
   } catch (error) {
     console.error("Error fetching analysis data:", error);

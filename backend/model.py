@@ -1,5 +1,7 @@
 import requests
 from config import (
+    anthropic_client,
+    CLAUDE_MODEL,
     FMP_API_KEY, 
     BALANCE_SHEET_API_URL, 
     INCOME_STATEMENT_API_URL, 
@@ -165,3 +167,88 @@ def insert_user_ticker(uid: str, ticker: str):
         return {"message": "Ticker added to user list"}
     else:
         return {"message": "Ticker already in user list"}
+    
+def generate_research_brief(ticker: str) -> str:
+    prompt = f"""
+    You are a financial writer for beginners, similar in tone to the Wall Street Journal or Investopedia.
+    Write a structured, beginner-friendly equity research report for the company with ticker symbol ({ticker}).
+
+    Return the content ONLY using the following tagged blocks (no JSON, no markdown, no extra text):
+    <<company_overview>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<business_segments>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<revenue_characteristics>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<geographic_breakdown>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<stakeholders>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<key_performance_indicators>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<valuation>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<recent_news>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    <<forensic_red_flags>>
+    ...1–3 sentence paragraphs, separated by a blank line.
+    <<end>>
+
+    Rules:
+    - Plain English for beginners; no jargon unless briefly explained.
+    - No bullets, tables, or special symbols.
+    - Output ONLY those tagged sections in the exact order above.
+    """
+    msg = anthropic_client.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=1600,
+        temperature=0.2,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
+
+    import re, html as _html
+    KEYS = [
+        "company_overview",
+        "business_segments",
+        "revenue_characteristics",
+        "geographic_breakdown",
+        "stakeholders",
+        "key_performance_indicators",
+        "valuation",
+        "recent_news",
+        "forensic_red_flags",
+    ]
+
+    def extract_block(key: str, s: str) -> str:
+        m = re.search(rf"<<{key}>>\s*(.*?)\s*<<end>>", s, flags=re.DOTALL | re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+
+    def to_paragraphs(txt: str) -> list[str]:
+        # split on blank lines; clean up whitespace
+        parts = [p.strip() for p in re.split(r"\n\s*\n", txt) if p.strip()]
+        # fallback: if no blank lines, split every 2–3 sentences
+        if len(parts) <= 1:
+            sentences = re.split(r"(?<=\.)\s+", txt)
+            parts = [" ".join(sentences[i:i+3]).strip() for i in range(0, len(sentences), 3)]
+            parts = [p for p in parts if p]
+        return parts
+
+    sections = {k: to_paragraphs(extract_block(k, raw)) for k in KEYS}
+    return sections

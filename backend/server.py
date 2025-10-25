@@ -1,9 +1,27 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
-from model import calculate_stock_multiples, run_monte_carlo, insert_user_ticker
+from fastapi.middleware.cors import CORSMiddleware
+from model import (
+    calculate_stock_multiples, 
+        run_monte_carlo, 
+        insert_user_ticker, 
+    generate_research_brief
+)
 from query import fetch_userlist
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/multiples")
 def get_multiples_for_stock(
@@ -46,3 +64,12 @@ async def montecarlo_endpoint(
         return JSONResponse(content=result)
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
+    
+@app.get("/research")
+def research_endpoint(
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+):
+    try:
+        return generate_research_brief(ticker)
+    except Exception as e:
+        return {"error": str(e)}

@@ -1,14 +1,27 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from model import (
     calculate_stock_multiples, 
-    run_monte_carlo, 
-    insert_user_ticker, 
+        run_monte_carlo, 
+        insert_user_ticker, 
     generate_research_brief
 )
 from query import fetch_userlist
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/multiples")
 def get_multiples_for_stock(

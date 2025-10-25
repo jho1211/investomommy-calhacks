@@ -11,23 +11,83 @@ import { useToast } from "@/hooks/use-toast";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
-type AnalysisData = {
-  // shape this to whatever your backend returns
+type MultiplesData = {
   ticker: string;
-  // …fields for relative/absolute/montecarlo/sentiment sections
+  price_to_earnings: number | null;
+  ev_to_ebitda: number | null;
+  ev_to_ebit: number | null;
+  price_to_book: number | null;
+  debt_to_equity: number | null;
+  ev_to_invested_capital: number | null;
+  ev_to_fcf: number | null;
+  price_to_cash_flow: number | null;
+  ev_to_sales: number | null;
+  ev_to_revenue_per_employee: number | null;
 };
 
-// mock fetch while backend is wiring up
-async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
-  // replace with real fetch (Supabase/REST/GraphQL)
-  // example:
-  // const { data } = await supabase.from('analyses').select('*').eq('ticker', ticker).single();
-  // return data ?? null;
+type MonteCarloData = {
+  ticker: string;
+  spot_price: number;
+  mu_annual: number;
+  sigma_annual: number;
+  mean_return: number;
+  std_return: number;
+  var95_return: number;
+  es95_return: number;
+  mean_pnl: number;
+  std_pnl: number;
+  var95_pnl: number;
+  es95_pnl: number;
+  histogram_url: string;
+  paths_url: string;
+  params: {
+    years_history: number;
+    horizon_years: number;
+    steps_per_year: number;
+    n_paths: number;
+  };
+};
 
-  // temporary stub: pretend we only have TSLA and AAPL saved
-  const saved = new Set(["TSLA", "AAPL"]);
-  if (saved.has(ticker)) return { ticker };
-  return null;
+type AnalysisData = {
+  ticker: string;
+  multiples: MultiplesData | null;
+  montecarlo: MonteCarloData | null;
+};
+
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
+  try {
+    // Fetch both multiples and monte carlo data in parallel
+    const [multiplesResponse, montecarloResponse] = await Promise.all([
+      fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
+    ]);
+
+    let multiples: MultiplesData | null = null;
+    let montecarlo: MonteCarloData | null = null;
+
+    // Parse multiples data if successful
+    if (multiplesResponse.ok) {
+      multiples = await multiplesResponse.json();
+    }
+
+    // Parse monte carlo data if successful
+    if (montecarloResponse.ok) {
+      montecarlo = await montecarloResponse.json();
+    }
+
+    // Return analysis data even if one or both endpoints fail
+    // This allows partial data to be displayed
+    return {
+      ticker: ticker.toUpperCase(),
+      multiples,
+      montecarlo,
+    };
+  } catch (error) {
+    console.error("Error fetching analysis data:", error);
+    return null;
+  }
 }
 
 const StockAnalysis = () => {
@@ -57,6 +117,7 @@ const StockAnalysis = () => {
     fetchAnalysisForTicker(ticker).then((res) => {
       if (!active) return;
       setAnalysis(res);
+      console.log(res);
       setLoading(false);
     });
 

@@ -8,77 +8,67 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Trash2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface WatchlistStock {
-  id: string;
+type WatchlistItem = {
   ticker: string;
-  created_at: string;
+  company_name: string;
+};
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+
+/**
+ * GETs the watchlist using query params:
+ *   GET /userlist?uid=<user_id>
+ */
+async function fetchWatchlist(uid: string) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/userlist?uid=${encodeURIComponent(uid)}`
+    ); 
+    // If backend returns an error status (e.g., 400/500), stop here
+    if (!response.ok) {
+      throw new Error('HTTP ${response.status}');
+    }
+    
+    // ex: [{ ticker: "AAPL", company_name: "Apple Inc." }, ...]
+    return await response.json(); 
+  } catch (error) {
+    console.error("Error fetching watchlist:", error);
+    return null;
+  }
+  
 }
 
-const Dashboard = () => {
-  const [stocks, setStocks] = useState<WatchlistStock[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+export default function Dashboard() {
+  const { user } = useAuth(); // Get logged-in user from Supabase auth context
+  const [watchlist, setWatchlist] = useState<WatchlistItem[] | null>(null); // Holds fetched data
+  const [loading, setLoading] = useState(true); // UI state while loading
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Fetch watchlist as soon as `user` becomes available (i.e., once logged in)
   useEffect(() => {
-    if (user) {
-      fetchWatchlist();
-    } else {
+    // If no user is logged in, stop loading and show login screen
+    if (!user) {
       setLoading(false);
+      return;
     }
-  }, [user]);
+    // Self-calling async function inside useEffect
+    (async () => {
+      const data = await fetchWatchlist(user.id); // Call our API
+      if (!data) {
+        // If fetching failed, show error 
+        toast({
+          title: "Error",
+          description: "Failed to load watchlist",
+          variant: "destructive",
+        });
+      }
+      setWatchlist(data ?? []); // If `null`, default to empty array
+      setLoading(false); // Stop loading animation
+    })();
+  }, [user, toast]);
 
-  const fetchWatchlist = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("watchlist_stocks")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setStocks(data || []);
-    } catch (error) {
-      console.error("Error fetching watchlist:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load watchlist",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveStock = async (id: string, ticker: string) => {
-    try {
-      const { error } = await supabase
-        .from("watchlist_stocks")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setStocks(stocks.filter((s) => s.id !== id));
-      toast({
-        title: "Removed",
-        description: `${ticker} removed from watchlist`,
-      });
-    } catch (error) {
-      console.error("Error removing stock:", error);
-      toast({
-        title: "Error",
-        description: "Failed to remove stock",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAnalyze = (ticker: string) => {
-    navigate(`/dashboard/analysis/${ticker}`);
-  };
-
+  // If user is not logged in, show Login prompt instead
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -93,7 +83,7 @@ const Dashboard = () => {
       </div>
     );
   }
-
+  // Main UI rendering
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <Navigation />
@@ -105,11 +95,12 @@ const Dashboard = () => {
           </p>
         </div>
 
+        {/* Loading state */}
         {loading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading watchlist...</p>
           </div>
-        ) : stocks.length === 0 ? (
+        ) : !watchlist || watchlist.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -121,30 +112,18 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         ) : (
+          // Render watchlist items
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {stocks.map((stock) => (
-              <Card key={stock.id} className="hover:shadow-lg transition-shadow">
+            {watchlist.map((item, idx) => (
+              <Card key={`${item.ticker}-${idx}`} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">{stock.ticker}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveStock(stock.id, stock.ticker)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <span className="text-2xl font-bold">{item.ticker}</span>
                   </CardTitle>
-                  <CardDescription>
-                    Added {new Date(stock.created_at).toLocaleDateString()}
-                  </CardDescription>
+                  <CardDescription>{item.company_name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    className="w-full"
-                    onClick={() => handleAnalyze(stock.ticker)}
-                  >
+                  <Button className="w-full" onClick={() => navigate(`/dashboard/analysis/${item.ticker}`)}>
                     Show Analysis
                   </Button>
                 </CardContent>
@@ -155,6 +134,4 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

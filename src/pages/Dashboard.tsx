@@ -4,13 +4,36 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Scale, TrendingUp, BarChart3, Newspaper } from "lucide-react";
+import { Scale, TrendingUp, BarChart3, Newspaper, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
 const Dashboard = () => {
   const { ticker = "TSLA" } = useParams();
   const [openDetail, setOpenDetail] = useState<DetailType>(null);
+  const [showComparePicker, setShowComparePicker] = useState(false);
+  const [selectedComparisonTicker, setSelectedComparisonTicker] = useState<string | null>(null);
+
+  // Mock data - will be replaced with real sector data from backend
+  const comparableTickers = [
+    { symbol: "AAPL", name: "Apple Inc." },
+    { symbol: "MSFT", name: "Microsoft Corporation" },
+    { symbol: "GOOGL", name: "Alphabet Inc." },
+    { symbol: "AMZN", name: "Amazon.com Inc." },
+    { symbol: "META", name: "Meta Platforms Inc." },
+    { symbol: "NVDA", name: "NVIDIA Corporation" },
+    { symbol: "BRK.B", name: "Berkshire Hathaway Inc." },
+    { symbol: "JPM", name: "JPMorgan Chase & Co." },
+    { symbol: "V", name: "Visa Inc." },
+    { symbol: "WMT", name: "Walmart Inc." },
+  ];
+
+  const handleComparisonSelect = (symbol: string) => {
+    setSelectedComparisonTicker(symbol);
+    setShowComparePicker(false);
+    // Analysis will be triggered here when backend is connected
+  };
 
   const detailContent = {
     relative: {
@@ -138,17 +161,43 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-secondary/30 p-4 rounded-lg mb-4">
-                <p className="text-sm text-muted-foreground">
-                  Analysis based on comparative metrics with industry peers
-                </p>
+              {!selectedComparisonTicker ? (
+                <div className="bg-secondary/30 p-4 rounded-lg mb-4 border-2 border-dashed border-primary/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ArrowRight className="h-5 w-5 text-primary animate-pulse" />
+                    <p className="text-sm font-medium">Action Required</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Select a comparable stock to begin analysis
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-secondary/30 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Comparing with: <Badge variant="secondary">{selectedComparisonTicker}</Badge>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Analysis based on comparative metrics with industry peers
+                  </p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => setShowComparePicker(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {selectedComparisonTicker ? 'Change Comparison Stock' : `Compare ${ticker} to Another Stock`}
+                </Button>
+                {selectedComparisonTicker && (
+                  <Button 
+                    onClick={() => setOpenDetail("relative")}
+                    className="w-full"
+                  >
+                    View Details
+                  </Button>
+                )}
               </div>
-              <Button 
-                onClick={() => setOpenDetail("relative")}
-                className="w-full"
-              >
-                View Details
-              </Button>
             </CardContent>
           </Card>
 
@@ -246,6 +295,33 @@ const Dashboard = () => {
           </SheetHeader>
           <div className="mt-6">
             {openDetail && detailContent[openDetail].content}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Comparison Stock Picker Sidebar */}
+      <Sheet open={showComparePicker} onOpenChange={setShowComparePicker}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Select a Comparable Stock</SheetTitle>
+            <SheetDescription>
+              Choose from top 10 stocks in the same sector (S&P 500)
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-2">
+            {comparableTickers.map((stock) => (
+              <Button
+                key={stock.symbol}
+                variant="outline"
+                className="w-full justify-start h-auto py-3"
+                onClick={() => handleComparisonSelect(stock.symbol)}
+              >
+                <div className="text-left">
+                  <div className="font-semibold">{stock.symbol}</div>
+                  <div className="text-sm text-muted-foreground">{stock.name}</div>
+                </div>
+              </Button>
+            ))}
           </div>
         </SheetContent>
       </Sheet>

@@ -29,10 +29,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/analyze" element={<Analyze />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/:ticker" element={<Dashboard />} />
             <Route path="/about" element={<About />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/dashboard/analysis/:tickerSymbol" element={<StockAnalysis />} />
+            <Route path="/dashboard/analysis/:ticker" element={<StockAnalysis />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

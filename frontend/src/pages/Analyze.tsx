@@ -12,7 +12,7 @@ const Analyze = () => {
 
   const handleAnalyze = () => {
     if (ticker.trim()) {
-      navigate(`/dashboard/${ticker.toUpperCase()}`);
+      navigate(`/dashboard/analysis/${ticker.toUpperCase()}`);
     }
   };
 

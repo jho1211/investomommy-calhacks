@@ -1,9 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -37,9 +40,21 @@ const Navigation = () => {
             </Link>
           </div>
           
-          <Link to="/login">
-            <Button variant="default">Log in</Button>
-          </Link>
+          {user ? (
+            <Button 
+              variant="default" 
+              onClick={async () => {
+                await signOut();
+                navigate('/');
+              }}
+            >
+              Log out
+            </Button>
+          ) : (
+            <Link to="/login">
+              <Button variant="default">Log in</Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>

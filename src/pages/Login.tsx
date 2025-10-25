@@ -1,14 +1,73 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff, TrendingUp, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { user, signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      toast({
+        title: "Error signing in",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success!",
+        description: "You've been signed in.",
+      });
+      navigate('/');
+    }
+    
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signUp(email, password);
+    
+    if (error) {
+      toast({
+        title: "Error signing up",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success!",
+        description: "Check your email to confirm your account.",
+      });
+    }
+    
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -31,7 +90,7 @@ const Login = () => {
               </TabsList>
               
               <TabsContent value="login">
-                <form className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
@@ -41,6 +100,9 @@ const Login = () => {
                         type="email" 
                         placeholder="Enter your email"
                         className="pl-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                     </div>
                   </div>
@@ -54,6 +116,9 @@ const Login = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         className="pl-10 pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                       <button
                         type="button"
@@ -65,26 +130,14 @@ const Login = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full" size="lg">Login</Button>
-                  
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="bg-card px-2 text-muted-foreground">OR CONTINUE WITH</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" type="button">Google</Button>
-                    <Button variant="outline" type="button">Microsoft</Button>
-                  </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                    {loading ? "Signing in..." : "Login"}
+                  </Button>
                 </form>
               </TabsContent>
               
               <TabsContent value="signup">
-                <form className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
@@ -94,6 +147,9 @@ const Login = () => {
                         type="email" 
                         placeholder="Enter your email"
                         className="pl-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                     </div>
                   </div>
@@ -107,6 +163,9 @@ const Login = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         className="pl-10 pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                       <button
                         type="button"
@@ -118,21 +177,9 @@ const Login = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full" size="lg">Sign Up</Button>
-                  
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="bg-card px-2 text-muted-foreground">OR CONTINUE WITH</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" type="button">Google</Button>
-                    <Button variant="outline" type="button">Microsoft</Button>
-                  </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                    {loading ? "Creating account..." : "Sign Up"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>

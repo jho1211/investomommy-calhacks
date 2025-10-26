@@ -284,11 +284,60 @@ const StockAnalysis = () => {
           </ul>
 
           {/* EV/Sales */}
-          <h4 className="font-semibold mb-2">EV/FCF (Free Cash Flow):</h4>
+          <h4 className="font-semibold mb-2">EV/Sales:</h4>
           <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars of total company value investors pay for each $1 of sales.</p>
           <ul className="list-disc list-inside space-y-2 text-muted-foreground">
             <li><strong>Higher EV/Sales</strong> - Often means strong margins or rapid growth expected.</li>
             <li><strong>Lower EV/Sales</strong> - May indicate low profitability or slower growth.</li>
+          </ul>
+
+          {/* EV/Revenue per Employee */}
+          <h4 className="font-semibold mb-2">EV/Revenue per Employee:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: The total company value per employee, showing how efficiently a company generates value with its workforce.</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher ratio</strong> - More productive workforce or higher automation.</li>
+            <li><strong>Lower ratio</strong> - Labor-intensive or inefficient operations.</li>
+          </ul>
+
+          {/* Price/Book Value */}
+          <h4 className="font-semibold mb-2">Price / Book Value:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How much investors pay relative to the company’s net assets (assets − liabilities).</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher P/B</strong> - Investors believe the company earns strong returns on assets or has valuable intangibles (like brand or tech).</li>
+            <li><strong>Lower P/B</strong> - Could signal undervaluation or poor asset returns.</li>
+          </ul>
+
+          {/* Debt/Equity Value */}
+          <h4 className="font-semibold mb-2">Debt / Equity:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How much debt the company uses relative to shareholders’ equity.</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher D/E</strong> - More financial risk, but can amplify returns.</li>
+            <li><strong>Lower D/E</strong> - More conservative, safer balance sheet.</li>
+          </ul>
+
+          {/* EV/Invested Capital*/}
+          <h4 className="font-semibold mb-2">EV / Invested Capital:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: Compares total company value to all capital invested (debt + equity − cash).
+          Example: A = 1.5×, B = 3.0× → B is more expensive; investors value its capital base higher.</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>EV/Invested Capital &gt; 1</strong> - Company creates value above cost of capital.</li>
+            <li><strong>EV/Invested Capital &lt; 1</strong> - Company may be destroying value or underperforming.</li>
+          </ul>
+
+          {/* P/E */}
+          <h4 className="font-semibold mb-2">Price / Earnings:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars investors pay for each $1 of earnings (profit).</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>High P/E</strong> - Market expects strong profit growth.</li>
+            <li><strong>Low P/E</strong> - Company may be undervalued, mature, or risky.</li>
+          </ul>
+
+          {/* EV/EBITD */}
+          <h4 className="font-semibold mb-2">EV/EBITD:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars of total company value investors pay for each $1 of EBIT (earnings before interest and taxes).</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>High EV/EBITD</strong> - Investors expect high growth or returns.</li>
+            <li><strong>Low EV/EBITD</strong> - Might be cheaper, or facing lower growth or operational risks.</li>
           </ul>
         </div>
       ),

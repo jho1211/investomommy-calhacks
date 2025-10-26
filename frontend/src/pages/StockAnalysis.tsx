@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import AddToWatchlistButton from "@/components/AddToWatchlistButton";
 import { MonteCarloChart } from "@/components/MonteCarloChart";
-// import { NewsAnalysis } from "@/components/NewsAnalysis";
+import NewsAnalysis from "@/components/NewsAnalysis";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -433,6 +433,41 @@ const StockAnalysis = () => {
       </div>
     );
   }
+// percent formatter: 0.42 -> "42%"
+const toPct0 = (v?: number | null) =>
+  v === null || v === undefined ? "—" : `${Math.round(v * 100)}%`;
+
+// choose a badge look based on sentiment
+const sentimentBadgeClass = (s: "positive" | "neutral" | "negative") => {
+  if (s === "positive") return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+  if (s === "negative") return "bg-red-100 text-red-700 border border-red-200";
+  return "bg-slate-100 text-slate-700 border border-slate-200";
+};
+
+// tiny "time ago" formatter
+const timeAgo = (iso: string) => {
+  const d = new Date(iso);
+  const s = Math.max(1, Math.floor((Date.now() - d.getTime()) / 1000));
+  const mins = Math.floor(s / 60);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  if (s < 60) return `${s}s ago`;
+  if (mins < 60) return `${mins}m ago`;
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${days}d ago`;
+};
+
+// extract host from a URL for display
+const hostOf = (url: string) => {
+  try { return new URL(url).host.replace(/^www\./, ""); } catch { return ""; }
+};
+
+// clamp a number (0–1) to percentage width for bars
+const pctWidth = (v?: number | null) => {
+  if (v === null || v === undefined || Number.isNaN(v)) return "0%";
+  const clamped = Math.max(0, Math.min(1, v));
+  return `${clamped * 100}%`;
+};
 
   return (
     <div className="min-h-screen bg-background">
@@ -554,13 +589,23 @@ const StockAnalysis = () => {
                 AI-powered analysis of recent financial news headlines and market sentiment for {ticker}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="bg-secondary/30 p-4 rounded-lg mb-4">
-                <p className="text-sm text-muted-foreground">Natural language processing of recent news articles</p>
-              </div>
-              <Button onClick={() => setOpenDetail("sentiment")} className="w-full">
-                View Details
-              </Button>
+                        
+            <CardContent className="space-y-4">
+              {/* Pie chart */}
+              {analysis?.overallNewsSentiment ? (
+                <div className="min-h-[280px]">
+                  <NewsAnalysis
+                    overallNewsSentiment={analysis.overallNewsSentiment}
+                    newsSentiment={analysis.newsSentiment}
+                  />
+                </div>
+              ) : (
+                <div className="bg-secondary/30 p-4 rounded-lg text-sm text-muted-foreground">
+                  No daily sentiment summary available.
+                </div>
+              )}
+
+              <Button onClick={() => setOpenDetail("sentiment")} className="w-full">View Details</Button>
             </CardContent>
           </Card>
         </div>

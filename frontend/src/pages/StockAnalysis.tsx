@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Scale, TrendingUp, BarChart3, Newspaper, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -101,6 +102,18 @@ type AnalysisData = {
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+async function fetchMultiplesForTicker(ticker: string): Promise<MultiplesData | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error("Error fetching multiples data:", error);
+  }
+  return null;
+}
+
 async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
   try {
     // Fetch all data in parallel
@@ -180,6 +193,7 @@ const StockAnalysis = () => {
   const [openDetail, setOpenDetail] = useState<DetailType>(null);
   const [showComparePicker, setShowComparePicker] = useState(false);
   const [selectedComparisonTicker, setSelectedComparisonTicker] = useState<string | null>(null);
+  const [comparisonTickerMultiples, setComparisonTickerMultiples] = useState<MultiplesData | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -218,6 +232,12 @@ const StockAnalysis = () => {
         });
       }, 1000);
       return () => clearTimeout(timer);
+    } else {
+      // fetch multiples for selected comparison ticker
+      fetchMultiplesForTicker(selectedComparisonTicker).then((data) => {
+        setComparisonTickerMultiples(data);
+        console.log(data);
+      });
     }
   }, [ticker, selectedComparisonTicker, toast]);
 
@@ -483,6 +503,35 @@ const StockAnalysis = () => {
       </div>
     );
   }
+
+// Helper function to format multiples values
+const formatMultiple = (value: number | null): string => {
+  if (value === null || value === undefined) return "—";
+  return value.toFixed(2);
+};
+
+// Helper function to get cell styling based on comparison
+const getComparisonStyle = (
+  value1: number | null,
+  value2: number | null,
+  isHigherBetter: boolean | null = true
+): string => {
+  if (value1 === null || value2 === null) return "";
+  
+  // Neutral styling if isHigherBetter is null (context-dependent metrics)
+  if (isHigherBetter === null) {
+    return "bg-amber-50 text-amber-900";
+  }
+  
+  const isBetter = isHigherBetter ? value1 > value2 : value1 < value2;
+  
+  if (isBetter) {
+    return "bg-emerald-50 text-emerald-900 font-semibold";
+  } else {
+    return "bg-red-50 text-red-900";
+  }
+};
+
 // percent formatter: 0.42 -> "42%"
 const toPct0 = (v?: number | null) =>
   v === null || v === undefined ? "—" : `${Math.round(v * 100)}%`;
@@ -565,6 +614,199 @@ const pctWidth = (v?: number | null) => {
                   </p>
                 </div>
               )}
+              <div className="mt-4 mb-6">
+                {selectedComparisonTicker && analysis?.multiples && comparisonTickerMultiples ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-semibold text-foreground">Metric</TableHead>
+                        <TableHead className="font-semibold text-foreground">{ticker}</TableHead>
+                        <TableHead className="font-semibold text-foreground">{selectedComparisonTicker}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">P/E Ratio</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.price_to_earnings,
+                          comparisonTickerMultiples.price_to_earnings,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.price_to_earnings)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.price_to_earnings,
+                          analysis.multiples.price_to_earnings,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.price_to_earnings)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/EBITDA</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_ebitda,
+                          comparisonTickerMultiples.ev_to_ebitda,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_ebitda)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_ebitda,
+                          analysis.multiples.ev_to_ebitda,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_ebitda)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/EBIT</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_ebit,
+                          comparisonTickerMultiples.ev_to_ebit,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_ebit)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_ebit,
+                          analysis.multiples.ev_to_ebit,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_ebit)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">P/B Ratio</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.price_to_book,
+                          comparisonTickerMultiples.price_to_book,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.price_to_book)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.price_to_book,
+                          analysis.multiples.price_to_book,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.price_to_book)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">Debt/Equity</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.debt_to_equity,
+                          comparisonTickerMultiples.debt_to_equity,
+                          null
+                        )}>
+                          {formatMultiple(analysis.multiples.debt_to_equity)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.debt_to_equity,
+                          analysis.multiples.debt_to_equity,
+                          null
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.debt_to_equity)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/Invested Capital</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_invested_capital,
+                          comparisonTickerMultiples.ev_to_invested_capital,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_invested_capital)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_invested_capital,
+                          analysis.multiples.ev_to_invested_capital,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_invested_capital)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/FCF</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_fcf,
+                          comparisonTickerMultiples.ev_to_fcf,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_fcf)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_fcf,
+                          analysis.multiples.ev_to_fcf,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_fcf)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">P/Cash Flow</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.price_to_cash_flow,
+                          comparisonTickerMultiples.price_to_cash_flow,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.price_to_cash_flow)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.price_to_cash_flow,
+                          analysis.multiples.price_to_cash_flow,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.price_to_cash_flow)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/Sales</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_sales,
+                          comparisonTickerMultiples.ev_to_sales,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_sales)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_sales,
+                          analysis.multiples.ev_to_sales,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_sales)}
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell className="font-medium">EV/Revenue per Employee</TableCell>
+                        <TableCell className={getComparisonStyle(
+                          analysis.multiples.ev_to_revenue_per_employee,
+                          comparisonTickerMultiples.ev_to_revenue_per_employee,
+                          true
+                        )}>
+                          {formatMultiple(analysis.multiples.ev_to_revenue_per_employee)}
+                        </TableCell>
+                        <TableCell className={getComparisonStyle(
+                          comparisonTickerMultiples.ev_to_revenue_per_employee,
+                          analysis.multiples.ev_to_revenue_per_employee,
+                          true
+                        )}>
+                          {formatMultiple(comparisonTickerMultiples.ev_to_revenue_per_employee)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>) : null}
+              </div>
               <div className="space-y-2">
                 <Button onClick={() => setShowComparePicker(true)} variant="outline" className="w-full">
                   {selectedComparisonTicker ? "Change Comparison Stock" : `Compare ${ticker} to Another Stock`}

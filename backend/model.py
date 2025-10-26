@@ -1,5 +1,5 @@
 import requests
-from config import (
+from .config import (
     anthropic_client,
     CLAUDE_MODEL,
     FMP_API_KEY, 
@@ -10,7 +10,7 @@ from config import (
     COMPANY_SEARCH_API_URL,
     supabase
 )
-from query import (
+from .query import (
     fetch_multiples, 
     fetch_userlist, 
     check_ticker_exists, 

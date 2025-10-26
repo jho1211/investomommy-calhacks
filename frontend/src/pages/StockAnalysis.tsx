@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import AddToWatchlistButton from "@/components/AddToWatchlistButton";
 import { MonteCarloChart } from "@/components/MonteCarloChart";
 import NewsAnalysis from "@/components/NewsAnalysis";
+import DCF from "@/components/DCF";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -578,7 +579,7 @@ const pctWidth = (v?: number | null) => {
           </Card>
 
           {/* Absolute Valuation Card */}
-          <Card className="hover:shadow-lg transition-shadow">
+          {/* <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-6 w-6 text-primary" />
@@ -596,7 +597,8 @@ const pctWidth = (v?: number | null) => {
                 View Details
               </Button>
             </CardContent>
-          </Card>
+          </Card> */}
+          <DCF ticker={ticker} />
 
           {/* Monte Carlo Simulation Card */}
           <Card className="hover:shadow-lg transition-shadow">

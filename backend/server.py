@@ -1,17 +1,18 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from model import (
+from .model import (
     calculate_stock_multiples, 
         run_monte_carlo, 
         insert_user_ticker, 
     generate_research_brief,
 )
-from query import (
+from .query import (
     fetch_userlist, 
     fetch_news_sentiment, 
     fetch_overall_news_sentiment
 )
+from dcf.router import router as dcf_router
 
 app = FastAPI()
 
@@ -90,3 +91,5 @@ def overall_news_sentiment_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return fetch_overall_news_sentiment(ticker.upper())
+
+app.include_router(dcf_router, prefix="")

@@ -1,4 +1,4 @@
-from config import supabase
+from .config import supabase
 
 def fetch_multiples(ticker: str):
     response = supabase.table("stockmultiples").select("*").eq("ticker", ticker).execute()

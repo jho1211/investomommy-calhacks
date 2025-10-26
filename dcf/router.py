@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 import yfinance as yf
 import numpy as np
 import math
-from calc import dcf_valuation  # keep this import
+from .calc import dcf_valuation  # keep this import
 
 router = APIRouter(prefix="/api/dcf", tags=["DCF"])
 

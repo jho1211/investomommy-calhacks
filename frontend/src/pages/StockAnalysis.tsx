@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import AddToWatchlistButton from "@/components/AddToWatchlistButton";
 import { MonteCarloChart } from "@/components/MonteCarloChart";
+// import { NewsAnalysis } from "@/components/NewsAnalysis";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -311,15 +312,13 @@ const StockAnalysis = () => {
             if a stock is overpriced or a good deal.
           </p>
 
-          <div className="bg-secondary/30 p-4 rounded-lg">
-            <h4 className="font-semibold mb-2">How It Works:</h4>
-            <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
-               <li><strong>Forecast future cash flows</strong> – Estimate how much money the company will generate each year.</li>
-              <li><strong>Discount to present value</strong> - Use a discount rate to adjust for risk and the fact that money today is worth more than money in the future.</li>
-              <li><strong>Find intrinsic value</strong> - Add up all those present values to get the company’s total worth.</li>
-              <li><strong>Compare to market price</strong> – If the intrinsic value is higher than the current stock price, the stock might be undervalued.</li>
-            </ol>
-          </div>
+          <h4 className="font-semibold mb-2">How It Works:</h4>
+          <ol className="text-muted-foreground list-decimal list-inside">
+            <li><strong>Forecast future cash flows</strong> – Estimate how much money the company will generate each year.</li>
+            <li><strong>Discount to present value</strong> - Use a discount rate to adjust for risk and the fact that money today is worth more than money in the future.</li>
+            <li><strong>Find intrinsic value</strong> - Add up all those present values to get the company’s total worth.</li>
+            <li><strong>Compare to market price</strong> – If the intrinsic value is higher than the current stock price, the stock might be undervalued.</li>
+          </ol>
         </div>
       ),
     },

@@ -8,6 +8,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
 from datetime import datetime
 from dotenv import load_dotenv
+import html
+import ftfy
 
 # --- Load API key ---
 load_dotenv()
@@ -46,6 +48,22 @@ AVAILABLE_TICKERS = {
     "DIS": "Walt Disney Co."
 }
 
+# Clean up the news
+def clean_text(text):
+    if not text:
+        return ""
+    
+    text = ftfy.fix_text(text)  # fixes mojibake and weird encodings
+
+    # Replace curly quotes/dashes
+    text = text.replace("’", "'").replace("“", '"').replace("”", '"')
+    text = text.replace("–", "-").replace("—", "-")
+
+    # Unescape HTML entities
+    text = html.unescape(text)
+    
+    return text
+
 # --- Function to fetch company news ---
 def fetch_news(symbol, days=5, limit=10):
     today = date.today()
@@ -58,10 +76,18 @@ def fetch_news(symbol, days=5, limit=10):
     if response.status_code != 200:
         print(f"❌ Error fetching news for {symbol}: {response.status_code}")
         return []
-
+    
+ 
     data = response.json()
-    news = [{"headline": item["headline"], "datetime": item.get("datetime"), "url": item.get("url"),
-        "summary": item.get("summary")} for item in data[:limit]]
+
+
+    news = [{
+        "headline": clean_text(item.get("headline")),
+        "datetime": item.get("datetime"),
+        "url": item.get("url"),
+        "summary": clean_text(item.get("summary"))
+    } for item in data[:limit]]
+
     return news
 
 # --- Function to analyze sentiment with FinBERT ---

@@ -2,7 +2,6 @@ import logging
 import traceback
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 
 # ---- your app code imports ----
 from model import (
@@ -24,24 +23,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("investomommy")
 
 app = FastAPI(title="InvestoMommy API")
-
-# Allow common local dev origins (add more if needed)
-ALLOWED_ORIGINS = [
-    "http://localhost:8080",   # your current front-end
-    "http://127.0.0.1:8080",
-    "http://localhost:5173",   # Vite default
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",   # CRA/Next.js
-    "http://127.0.0.1:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # -------- Health + error handling --------
 @app.get("/health")
@@ -130,7 +111,3 @@ app.include_router(dcf_router, prefix="/api/dcf", tags=["DCF"])
 @app.get("/api/dcf/health")
 def dcf_health():
     return {"ok": True}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

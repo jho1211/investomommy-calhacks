@@ -9,6 +9,7 @@ import { Scale, TrendingUp, BarChart3, Newspaper, ArrowRight } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import AddToWatchlistButton from "@/components/AddToWatchlistButton";
+import { MonteCarloChart } from "@/components/MonteCarloChart";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -163,7 +164,7 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
 }
 
 const StockAnalysis = () => {
-  // ✅ read the dynamic URL param :ticker
+  // Read the dynamic URL param :ticker
   const params = useParams<{ ticker?: string }>();
   const rawTicker = params.ticker;
   
@@ -248,20 +249,46 @@ const StockAnalysis = () => {
       description: "Compare stocks using price multiples",
       content: (
         <div className="space-y-4">
+          <h4 className="font-semibold mb-2">Purpose:</h4>
           <p className="text-muted-foreground">
-            Relative valuation helps you compare similar companies by looking at their price multiples.
+            Compare a company’s market value to peers in the same industry to gauge whether it’s trading at a premium 
+            or discount based on key financial ratios.
           </p>
-          <div className="bg-secondary/30 p-4 rounded-lg">
-            <h4 className="font-semibold mb-2">Common Metrics:</h4>
-            <ul className="space-y-2 text-sm">
-              <li><strong>P/E Ratio:</strong> How much you pay per dollar of earnings</li>
-              <li><strong>P/B Ratio:</strong> Price compared to the company's book value</li>
-              <li><strong>P/S Ratio:</strong> Price compared to sales revenue</li>
-            </ul>
-          </div>
+
+          <h4 className="font-semibold mb-2">Overview:</h4>
           <p className="text-muted-foreground">
-            Much higher multiples than peers can mean overvaluation. Much lower can mean undervaluation or a risk discount.
+            Higher valuation multiples suggest investors expect stronger growth, while lower multiples can signal undervaluation 
+            or weaker prospects. However, these comparisons are only meaningful between companies with similar business models, 
+            sizes, and profit margins.
           </p>
+          <p className="text-muted-foreground">Below are the price multiples that were used to compare the companies with their peers of your choice.</p>
+          
+          {/* EV/EBITDA */}
+          <h4 className="font-semibold mb-2">EV/EBITDA:</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars of total company value (EV) investors pay for each $1 of operating profit before 
+              interest, taxes, depreciation, and amortization.
+          </p>
+          <p className="text-muted-foreground"><strong>Interpretation</strong>: </p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher Multiple</strong> - Investors expect faster growth, higher margins, or see it as a higher-quality business.</li>
+            <li><strong>Lower Multiple</strong> - The company may be cheaper, riskier, or growing slower.</li>
+          </ul>
+
+          {/* EV/FCF */}
+          <h4 className="font-semibold mb-2">EV/FCF (Free Cash Flow):</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars of total value investors pay for each $1 of free cash flow.</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher EV/FCF</strong> - Market expects future cash flow growth or sees it as a high-quality generator.</li>
+            <li><strong>Lower EV/FCF</strong> - Could be undervalued or have low confidence in cash flow sustainability.</li>
+          </ul>
+
+          {/* EV/Sales */}
+          <h4 className="font-semibold mb-2">EV/FCF (Free Cash Flow):</h4>
+          <p className="text-muted-foreground"><strong>Meaning</strong>: How many dollars of total company value investors pay for each $1 of sales.</p>
+          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+            <li><strong>Higher EV/Sales</strong> - Often means strong margins or rapid growth expected.</li>
+            <li><strong>Lower EV/Sales</strong> - May indicate low profitability or slower growth.</li>
+          </ul>
         </div>
       ),
     },
@@ -271,15 +298,26 @@ const StockAnalysis = () => {
       description: "Determine intrinsic stock value",
       content: (
         <div className="space-y-4">
+          <h4 className="font-semibold mb-2">Purpose:</h4>
           <p className="text-muted-foreground">
-            The DCF model estimates intrinsic value from future cash flows discounted to today.
+            Find what a company is really worth, not just what the market says.
           </p>
+
+          <h4 className="font-semibold mb-2">Overview:</h4>
+          <p className="text-muted-foreground">
+            The <strong>Discounted Cash Flow (DCF)</strong> model helps estimate a company’s true or “intrinsic” value. 
+            It does this by predicting how much cash the business will make in the future and then 
+            converting those future amounts into what they’re worth today. This helps investors decide 
+            if a stock is overpriced or a good deal.
+          </p>
+
           <div className="bg-secondary/30 p-4 rounded-lg">
             <h4 className="font-semibold mb-2">How It Works:</h4>
-            <ol className="space-y-2 text-sm list-decimal list-inside">
-              <li>Forecast cash flows</li>
-              <li>Discount to present value</li>
-              <li>Compare intrinsic value to market price</li>
+            <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
+               <li><strong>Forecast future cash flows</strong> – Estimate how much money the company will generate each year.</li>
+              <li><strong>Discount to present value</strong> - Use a discount rate to adjust for risk and the fact that money today is worth more than money in the future.</li>
+              <li><strong>Find intrinsic value</strong> - Add up all those present values to get the company’s total worth.</li>
+              <li><strong>Compare to market price</strong> – If the intrinsic value is higher than the current stock price, the stock might be undervalued.</li>
             </ol>
           </div>
         </div>
@@ -291,8 +329,40 @@ const StockAnalysis = () => {
       description: "Visualize price uncertainty",
       content: (
         <div className="space-y-4">
+          <h4 className="font-semibold mb-2">Purpose:</h4>
           <p className="text-muted-foreground">
-            Run many scenarios to see a distribution of possible future prices.
+            Run many scenarios to visualize uncertainty and understand the 
+            range of possible future stock prices.
+          </p>
+
+          <h4 className="font-semibold mb-2">Overview:</h4>
+          <p className="text-muted-foreground">
+            The <strong>Monte Carlo Simulation</strong> helps estimate how a company’s stock price might change 
+            over time by running thousands of random scenarios based on past data. It doesn’t predict 
+            the exact future but shows a range of possible outcomes and how likely each one is. This 
+            helps investors see potential risks and returns under different market conditions.
+          </p>
+          
+          <h4 className="font-semibold mb-2">How It Works::</h4>
+          <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
+              <li><strong>Collect data</strong> – Use historical stock prices to understand how the stock usually moves.</li>
+              <li><strong>Generate random paths</strong> - Simulate thousands of possible price paths using mathematical models.</li>
+              <li><strong>Plot results</strong> - Create a graph showing all possible future prices to visualize uncertainty and volatility.</li>
+              <li><strong>Interpret outcomes</strong> – A wider spread of results means higher risk, while a tighter range suggests more stability.</li>
+            </ol>
+          
+          <h4 className="font-semibold mb-2">Line Graph:</h4>
+          <p className="text-muted-foreground">
+            The line graph displays many possible stock price paths over time. Each line starts at the same point and then moves 
+            differently, spreading wider as time passes. This spread shows how volatility creates a range of possible outcomes.
+          </p>
+
+          <h4 className="font-semibold mb-2">Histogram:</h4>
+          <p className="text-muted-foreground">
+            The bar graph shows how often different final stock prices appeared after many simulations. The y-axis labeled 
+            “frequency” represents how many times the final price landed in each range, meaning how common that outcome was. Taller 
+            bars mean those prices occurred more frequently, forming a central peak where most outcomes landed. The right-leaning 
+            shape means a few higher prices happened, but they were rare.
           </p>
         </div>
       ),
@@ -303,9 +373,35 @@ const StockAnalysis = () => {
       description: "AI-powered news sentiment",
       content: (
         <div className="space-y-4">
+          <h4 className="font-semibold mb-2">Purpose:</h4>
           <p className="text-muted-foreground">
-            Aggregate and score recent headlines for overall sentiment.
+            Understand how news affects investor behavior and how market 
+            tone can impact a company’s stock price.
           </p>
+
+          <h4 className="font-semibold mb-2">Overview:</h4>
+          <p className="text-muted-foreground">
+            This tool uses AI to analyze recent financial news headlines about a company and 
+            determine the overall sentiment. Each headline is classified as positive, negative, 
+            or neutral, helping investors see how the market feels toward a company at a glance. 
+            By tracking sentiment over time, you can spot patterns like growing optimism before 
+            price jumps or negative tone before selloffs.
+          </p>
+
+          <h4 className="font-semibold mb-2">Why It Matters:</h4>
+          <p className="text-muted-foreground">
+            News moves markets. Understanding sentiment gives investors an early look at how perception is 
+            shifting before it shows up in the price.
+          </p>
+          
+          <h4 className="font-semibold mb-2">How It Works:</h4>
+          <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
+              <li><strong>Collect news data</strong> – Collect news data – Using Finnhub to gather recent company-specific articles and headlines.</li>
+              <li><strong>Analyze tone</strong> - Run each headline through FinBERT that detects whether the language is positive, negative, or neutral.</li>
+              <li><strong>Investment sentiment</strong> - Assign a score between –1.0 and +1.0, where higher means more positive tone.</li>
+              <li><strong>Summarize results</strong> – Combine the scores to find the overall market mood and visualize sentiment trends over time.</li>
+              <li><strong>Interpret findings</strong> – A rising sentiment score could mean investors are more confident, while a drop might signal growing caution.</li>
+            </ol>
         </div>
       ),
     },
@@ -430,10 +526,18 @@ const StockAnalysis = () => {
                 Statistical model showing the uncertainty distribution for {ticker}'s potential price movements
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="bg-secondary/30 p-4 rounded-lg mb-4">
-                <p className="text-sm text-muted-foreground">Probability-based price projection analysis</p>
-              </div>
+
+            <CardContent className="space-y-4">
+              {analysis?.montecarlo?.paths_url ? (
+                <div className="bg-secondary/30 p-4 rounded-lg">
+                  <MonteCarloChart data={analysis.montecarlo} />
+                </div>
+              ) : (
+                <div className="bg-secondary/30 p-6 rounded-lg text-sm text-muted-foreground">
+                  No Monte Carlo visualization available.
+                </div>
+              )}
+
               <Button onClick={() => setOpenDetail("montecarlo")} className="w-full">
                 View Details
               </Button>

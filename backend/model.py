@@ -1,14 +1,15 @@
 import requests
 from .config import (
-    anthropic_client,
-    CLAUDE_MODEL,
     FMP_API_KEY, 
     BALANCE_SHEET_API_URL, 
     INCOME_STATEMENT_API_URL, 
     KEY_METRICS_API_URL, 
     EMPLOYEE_COUNT_API_URL, 
     COMPANY_SEARCH_API_URL,
-    supabase
+    supabase,
+    LAVA_API_URL,
+    LAVA_FORWARD_TOKEN,
+    LLM_MODEL
 )
 from .query import (
     fetch_multiples, 
@@ -227,13 +228,29 @@ def generate_research_brief(ticker: str) -> str:
     - No bullets, tables, or special symbols.
     - Output ONLY those tagged sections in the exact order above.
     """
-    msg = anthropic_client.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=1600,
-        temperature=0.2,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
+    if "claude" in LLM_MODEL.lower():
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": LAVA_FORWARD_TOKEN,
+            "anthropic-version": "2023-06-01"
+        }
+    else:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LAVA_FORWARD_TOKEN}"
+        }
+
+    response = requests.post(LAVA_API_URL, headers=headers, json={
+        "model": LLM_MODEL,
+        "messages": [{"role": "user", "content": prompt}]
+    })
+
+    if not response.ok:
+        raise ValueError(f"Lava API error: {response.status_code} {response.text}")
+    
+    msg = response.json()
+
+    raw = msg["choices"][0]["message"]["content"].strip()
 
     import re, html as _html
     KEYS = [

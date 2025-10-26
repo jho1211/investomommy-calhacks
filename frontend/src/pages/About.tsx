@@ -116,16 +116,18 @@ const About = () => {
               <h2 className="text-2xl font-bold mb-4">Our Story</h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Investing can be intimidating. It feels like a mysterious force, the same one that bankrupted Uncle Bill but somehow made Auntie Layla a millionaire. Maybe you're the quiet observer at parties where people talk about ETFs and dividends, and you're just nodding along while secretly wondering what any of it means. You're curious, maybe even excited, but also a little unsure. And honestly, that's exactly who InvestoMommy was built for.
+                  In an era where our community is hyper-fixated on building the next flashy AI or humanoid robot, 
+                  we wanted to refocus our energy into building something that addresses a need that affects another 
+                  community that hold great importance to us: our families. Everyone on our team comes from an immigrant 
+                  family, parents who traded a lifetime of hours and physical labor for income, working tirelessly to give 
+                  us the opportunity to chase our dreams in achieving the "sexy" tech ventures everyone is focused on today. 
+                  But in doing so, many never had the time, language skills, or resources to learn financial literacy to invest 
+                  and build passive income. 
                 </p>
                 <p>
-                  We created this tool because we've been there. We struggled to understand stock valuations too, and we saw our friends and family wanting to build wealth but not having the time to sift through financial reports or learn complicated investment theories. That's why we built InvestoMommy. It simplifies the process without sacrificing reliability. The platform pulls real-time data and key financial metrics to calculate a stock's investment favourability score. And if you're wondering how we did the math, we'll show you. Every formula, metric, and decision is transparent so you can make informed choices on your own terms.
-                </p>
-                <p>
-                  As for the name "InvestoMommy," it comes from a place of comfort. When we're lost or overwhelmed, we turn to our moms. And when the stock market feels just as overwhelming, you can turn to InvestoMommy.
-                </p>
-                <p>
-                  With guidance, transparency, and a little reassurance, investing doesn't have to be so scary anymore.
+                  As children of immigrants, watching our parents struggle through job insecurity, rising living costs, and uncertainty 
+                  in navigating the investment world inspired us to create InvestoMommy, a tool that lowers the barriers to investing, 
+                  making the money that our families have worked so hard for, make money back for them. 
                 </p>
               </div>
             </CardContent>

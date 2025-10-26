@@ -97,8 +97,34 @@ type AnalysisData = {
   montecarlo: MonteCarloData | null;
   research: ResearchData | null;
   newsSentiment: NewsSentimentItem[];
-  overallNewsSentiment: OverallNewsSentiment;
+  overallNewsSentiment: OverallNewsSentiment | null; // <— was non-nullable
+  dcf: DcfSummary | null; // <— add this
 };
+
+type DcfSummary = {
+  ticker: string;
+  market_price: number | null;
+  wacc: number | null;
+  g: number | null;
+  intrinsic_value_base: number | null;
+  intrinsic_value_dynamic: number | null;
+};
+
+type DcfApiResponse = {
+  ticker?: string;
+  summary?: {
+    ticker?: string;
+    market_price?: number | null;
+    wacc?: number | null;
+    g?: number | null;
+    intrinsic_value_base?: number | null;
+    intrinsic_value_dynamic?: number | null;
+  };
+  inputs?: { wacc?: number; terminal_growth?: number };
+  dcf_result?: { intrinsic_value_per_share?: number };
+  financials_snapshot?: { totals?: { price?: number } };
+};
+
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -122,13 +148,15 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       montecarloResponse, 
       researchResponse,
       newsSentimentResponse,
-      overallNewsSentimentResponse
+      overallNewsSentimentResponse,
+      dcfSummary,
     ] = await Promise.all([
       fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/api/research?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/news-sentiment?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/overall-news-sentiment?ticker=${encodeURIComponent(ticker)}`),
+      fetchDcfSummary(ticker),
     ]);
 
     let multiples: MultiplesData | null = null;
@@ -171,9 +199,59 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       research,
       newsSentiment,
       overallNewsSentiment,
+      dcf: dcfSummary ?? null,
     };
   } catch (error) {
     console.error("Error fetching analysis data:", error);
+    return null;
+  }
+}
+
+async function fetchDcfSummary(ticker: string): Promise<DcfSummary | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/dcf/${encodeURIComponent(ticker)}?years=10&midyear=true`
+    );
+    if (!res.ok) return null;
+
+    const data: DcfApiResponse = await res.json();
+
+    // Prefer the compact summary if present, otherwise fall back to nested fields
+    const iv =
+      data?.summary?.intrinsic_value_base ??
+      data?.dcf_result?.intrinsic_value_per_share ??
+      null;
+
+    const dyn =
+      data?.summary?.intrinsic_value_dynamic ??
+      data?.dcf_result?.intrinsic_value_per_share ??
+      null;
+
+    const wacc =
+      data?.summary?.wacc ??
+      data?.inputs?.wacc ??
+      null;
+
+    const g =
+      data?.summary?.g ??
+      data?.inputs?.terminal_growth ??
+      null;
+
+    const market =
+      data?.summary?.market_price ??
+      data?.financials_snapshot?.totals?.price ??
+      null;
+
+    return {
+      ticker: (data?.summary?.ticker ?? data?.ticker ?? ticker).toUpperCase(),
+      market_price: market,
+      wacc,
+      g,
+      intrinsic_value_base: iv,
+      intrinsic_value_dynamic: dyn,
+    };
+  } catch (e) {
+    console.error("Error fetching DCF:", e);
     return null;
   }
 }
@@ -820,27 +898,7 @@ const pctWidth = (v?: number | null) => {
             </CardContent>
           </Card>
 
-          {/* Absolute Valuation Card */}
-          {/* <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <CardTitle>Absolute Valuation (DCF)</CardTitle>
-              </div>
-              <CardDescription>
-                Discounted Cash Flow model to determine if {ticker} is currently overvalued or undervalued
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-secondary/30 p-4 rounded-lg mb-4">
-                <p className="text-sm text-muted-foreground">Intrinsic value calculation based on projected cash flows</p>
-              </div>
-              <Button onClick={() => setOpenDetail("absolute")} className="w-full">
-                View Details
-              </Button>
-            </CardContent>
-          </Card> */}
-          <DCF ticker={ticker} />
+          <DCF ticker={ticker} data={analysis?.dcf ?? null} />
 
           {/* Monte Carlo Simulation Card */}
           <Card className="hover:shadow-lg transition-shadow">

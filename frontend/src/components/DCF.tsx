@@ -7,20 +7,13 @@ import { Badge } from "@/components/ui/badge";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 type DcfResponse = {
-  valuation?: {
-    base_constant_wacc?: {
-      intrinsic_value_per_share?: number | null;
-      enterprise_value?: number | null;
-      pv_of_terminal_value?: number | null;
-    };
-    dynamic_wacc?: {
-      intrinsic_value_per_share?: number | null;
-    };
-  };
-  assumptions?: {
-    wacc_base?: number | null;
-    terminal_growth_used?: number | null;
-  };
+  dcf_result?: {
+    intrinsic_value_per_share?: number | null;
+    assumptions?: {
+      wacc?: number | null;
+      terminal_growth?: number | null;
+    }
+  }
   financials_snapshot?: {
     totals?: {
       price?: number | null;
@@ -53,25 +46,20 @@ export default function DCF({ ticker }: { ticker: string }) {
 
   const {
     price,
-    ivBase,
     ivDyn,
     wacc,
     tg,
-    upsideBase,
     upsideDyn,
   } = useMemo(() => {
     const price = data?.financials_snapshot?.totals?.price ?? null;
-    const ivBase = data?.valuation?.base_constant_wacc?.intrinsic_value_per_share ?? null;
-    const ivDyn = data?.valuation?.dynamic_wacc?.intrinsic_value_per_share ?? null;
-    const wacc = data?.assumptions?.wacc_base ?? null;
-    const tg = data?.assumptions?.terminal_growth_used ?? null;
+    const ivDyn = data?.dcf_result?.intrinsic_value_per_share ?? null;
+    const wacc = data?.dcf_result?.assumptions?.wacc ?? null;
+    const tg = data?.dcf_result?.assumptions?.terminal_growth ?? null;
 
-    const upsideBase =
-      price != null && ivBase != null ? (ivBase - price) / price : null;
     const upsideDyn =
       price != null && ivDyn != null ? (ivDyn - price) / price : null;
 
-    return { price, ivBase, ivDyn, wacc, tg, upsideBase, upsideDyn };
+    return { price, ivDyn, wacc, tg, upsideDyn };
   }, [data]);
 
   if (isLoading) {
@@ -115,7 +103,7 @@ export default function DCF({ ticker }: { ticker: string }) {
       <CardHeader>
         <CardTitle>DCF — Intrinsic Value</CardTitle>
         <CardDescription className="text-muted-foreground">
-          {ticker.toUpperCase()} • WACC {pct(wacc)} • g {pct(tg)}
+          {ticker.toUpperCase()} • WACC {pct(wacc)} • Terminal Growth Rate {pct(tg)}
         </CardDescription>
       </CardHeader>
 
@@ -124,17 +112,6 @@ export default function DCF({ ticker }: { ticker: string }) {
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Market price</span>
           <span className="font-medium">{usd(price)}</span>
-        </div>
-
-        {/* Base intrinsic value */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Intrinsic value (Base)</span>
-            <Badge className={upClass(upsideBase)}>
-              {upsideBase == null ? "—" : `${(upsideBase * 100).toFixed(1)}%`}
-            </Badge>
-          </div>
-          <span className="font-semibold">{usd(ivBase)}</span>
         </div>
 
         {/* Dynamic intrinsic value */}

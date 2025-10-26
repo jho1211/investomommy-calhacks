@@ -98,33 +98,7 @@ type AnalysisData = {
   research: ResearchData | null;
   newsSentiment: NewsSentimentItem[];
   overallNewsSentiment: OverallNewsSentiment | null; // <— was non-nullable
-  dcf: DcfSummary | null; // <— add this
 };
-
-type DcfSummary = {
-  ticker: string;
-  market_price: number | null;
-  wacc: number | null;
-  g: number | null;
-  intrinsic_value_base: number | null;
-  intrinsic_value_dynamic: number | null;
-};
-
-type DcfApiResponse = {
-  ticker?: string;
-  summary?: {
-    ticker?: string;
-    market_price?: number | null;
-    wacc?: number | null;
-    g?: number | null;
-    intrinsic_value_base?: number | null;
-    intrinsic_value_dynamic?: number | null;
-  };
-  inputs?: { wacc?: number; terminal_growth?: number };
-  dcf_result?: { intrinsic_value_per_share?: number };
-  financials_snapshot?: { totals?: { price?: number } };
-};
-
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -149,14 +123,12 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       researchResponse,
       newsSentimentResponse,
       overallNewsSentimentResponse,
-      dcfSummary,
     ] = await Promise.all([
       fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/news-sentiment?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/overall-news-sentiment?ticker=${encodeURIComponent(ticker)}`),
-      fetchDcfSummary(ticker),
     ]);
 
     let multiples: MultiplesData | null = null;
@@ -199,59 +171,9 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
       research,
       newsSentiment,
       overallNewsSentiment,
-      dcf: dcfSummary ?? null,
     };
   } catch (error) {
     console.error("Error fetching analysis data:", error);
-    return null;
-  }
-}
-
-async function fetchDcfSummary(ticker: string): Promise<DcfSummary | null> {
-  try {
-    const res = await fetch(
-      `${API_BASE_URL}/api/dcf/${encodeURIComponent(ticker)}?years=10&midyear=true`
-    );
-    if (!res.ok) return null;
-
-    const data: DcfApiResponse = await res.json();
-
-    // Prefer the compact summary if present, otherwise fall back to nested fields
-    const iv =
-      data?.summary?.intrinsic_value_base ??
-      data?.dcf_result?.intrinsic_value_per_share ??
-      null;
-
-    const dyn =
-      data?.summary?.intrinsic_value_dynamic ??
-      data?.dcf_result?.intrinsic_value_per_share ??
-      null;
-
-    const wacc =
-      data?.summary?.wacc ??
-      data?.inputs?.wacc ??
-      null;
-
-    const g =
-      data?.summary?.g ??
-      data?.inputs?.terminal_growth ??
-      null;
-
-    const market =
-      data?.summary?.market_price ??
-      data?.financials_snapshot?.totals?.price ??
-      null;
-
-    return {
-      ticker: (data?.summary?.ticker ?? data?.ticker ?? ticker).toUpperCase(),
-      market_price: market,
-      wacc,
-      g,
-      intrinsic_value_base: iv,
-      intrinsic_value_dynamic: dyn,
-    };
-  } catch (e) {
-    console.error("Error fetching DCF:", e);
     return null;
   }
 }
@@ -898,7 +820,7 @@ const pctWidth = (v?: number | null) => {
             </CardContent>
           </Card>
 
-          <DCF ticker={ticker} data={analysis?.dcf ?? null} />
+          <DCF ticker={ticker} />
 
           {/* Monte Carlo Simulation Card */}
           <Card className="hover:shadow-lg transition-shadow">

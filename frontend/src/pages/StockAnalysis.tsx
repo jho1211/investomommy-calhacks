@@ -207,7 +207,6 @@ const StockAnalysis = () => {
     fetchAnalysisForTicker(ticker).then((res) => {
       if (!active) return;
       setAnalysis(res);
-      console.log(res);
       setLoading(false);
     });
 
@@ -236,7 +235,6 @@ const StockAnalysis = () => {
       // fetch multiples for selected comparison ticker
       fetchMultiplesForTicker(selectedComparisonTicker).then((data) => {
         setComparisonTickerMultiples(data);
-        console.log(data);
       });
     }
   }, [ticker, selectedComparisonTicker, toast]);

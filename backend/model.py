@@ -182,103 +182,103 @@ def generate_research_brief(ticker: str) -> str:
     if cur_research_data is not None:
         return cur_research_data
 
-    prompt = f"""
-    You are a financial writer for beginners, similar in tone to the Wall Street Journal or Investopedia.
-    Write a structured, beginner-friendly equity research report for the company with ticker symbol ({ticker}).
+    # prompt = f"""
+    # You are a financial writer for beginners, similar in tone to the Wall Street Journal or Investopedia.
+    # Write a structured, beginner-friendly equity research report for the company with ticker symbol ({ticker}).
 
-    Return the content ONLY using the following tagged blocks (no JSON, no markdown, no extra text):
-    <<company_overview>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # Return the content ONLY using the following tagged blocks (no JSON, no markdown, no extra text):
+    # <<company_overview>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<business_segments>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<business_segments>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<revenue_characteristics>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<revenue_characteristics>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<geographic_breakdown>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<geographic_breakdown>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<stakeholders>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<stakeholders>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<key_performance_indicators>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<key_performance_indicators>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<valuation>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<valuation>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<recent_news>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<recent_news>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    <<forensic_red_flags>>
-    ...1–3 sentence paragraphs, separated by a blank line.
-    <<end>>
+    # <<forensic_red_flags>>
+    # ...1–3 sentence paragraphs, separated by a blank line.
+    # <<end>>
 
-    Rules:
-    - Plain English for beginners; no jargon unless briefly explained.
-    - No bullets, tables, or special symbols.
-    - Output ONLY those tagged sections in the exact order above.
-    """
-    if "claude" in LLM_MODEL.lower():
-        headers = {
-            "Content-Type": "application/json",
-            "x-api-key": LAVA_FORWARD_TOKEN,
-            "anthropic-version": "2023-06-01"
-        }
-    else:
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LAVA_FORWARD_TOKEN}"
-        }
+    # Rules:
+    # - Plain English for beginners; no jargon unless briefly explained.
+    # - No bullets, tables, or special symbols.
+    # - Output ONLY those tagged sections in the exact order above.
+    # """
+    # if "claude" in LLM_MODEL.lower():
+    #     headers = {
+    #         "Content-Type": "application/json",
+    #         "x-api-key": LAVA_FORWARD_TOKEN,
+    #         "anthropic-version": "2023-06-01"
+    #     }
+    # else:
+    #     headers = {
+    #         "Content-Type": "application/json",
+    #         "Authorization": f"Bearer {LAVA_FORWARD_TOKEN}"
+    #     }
 
-    response = requests.post(LAVA_API_URL, headers=headers, json={
-        "model": LLM_MODEL,
-        "messages": [{"role": "user", "content": prompt}]
-    })
+    # response = requests.post(LAVA_API_URL, headers=headers, json={
+    #     "model": LLM_MODEL,
+    #     "messages": [{"role": "user", "content": prompt}]
+    # })
 
-    if not response.ok:
-        raise ValueError(f"Lava API error: {response.status_code} {response.text}")
+    # if not response.ok:
+    #     raise ValueError(f"Lava API error: {response.status_code} {response.text}")
     
-    msg = response.json()
+    # msg = response.json()
 
-    raw = msg["choices"][0]["message"]["content"].strip()
+    # raw = msg["choices"][0]["message"]["content"].strip()
 
-    import re, html as _html
-    KEYS = [
-        "company_overview",
-        "business_segments",
-        "revenue_characteristics",
-        "geographic_breakdown",
-        "stakeholders",
-        "key_performance_indicators",
-        "valuation",
-        "recent_news",
-        "forensic_red_flags",
-    ]
+    # import re, html as _html
+    # KEYS = [
+    #     "company_overview",
+    #     "business_segments",
+    #     "revenue_characteristics",
+    #     "geographic_breakdown",
+    #     "stakeholders",
+    #     "key_performance_indicators",
+    #     "valuation",
+    #     "recent_news",
+    #     "forensic_red_flags",
+    # ]
 
-    def extract_block(key: str, s: str) -> str:
-        m = re.search(rf"<<{key}>>\s*(.*?)\s*<<end>>", s, flags=re.DOTALL | re.IGNORECASE)
-        return m.group(1).strip() if m else ""
+    # def extract_block(key: str, s: str) -> str:
+    #     m = re.search(rf"<<{key}>>\s*(.*?)\s*<<end>>", s, flags=re.DOTALL | re.IGNORECASE)
+    #     return m.group(1).strip() if m else ""
 
-    def to_paragraphs(txt: str) -> list[str]:
-        # split on blank lines; clean up whitespace
-        parts = [p.strip() for p in re.split(r"\n\s*\n", txt) if p.strip()]
-        # fallback: if no blank lines, split every 2–3 sentences
-        if len(parts) <= 1:
-            sentences = re.split(r"(?<=\.)\s+", txt)
-            parts = [" ".join(sentences[i:i+3]).strip() for i in range(0, len(sentences), 3)]
-            parts = [p for p in parts if p]
-        return parts
+    # def to_paragraphs(txt: str) -> list[str]:
+    #     # split on blank lines; clean up whitespace
+    #     parts = [p.strip() for p in re.split(r"\n\s*\n", txt) if p.strip()]
+    #     # fallback: if no blank lines, split every 2–3 sentences
+    #     if len(parts) <= 1:
+    #         sentences = re.split(r"(?<=\.)\s+", txt)
+    #         parts = [" ".join(sentences[i:i+3]).strip() for i in range(0, len(sentences), 3)]
+    #         parts = [p for p in parts if p]
+    #     return parts
 
-    sections = {k: to_paragraphs(extract_block(k, raw)) for k in KEYS}
-    insert_research_data(ticker, sections)
-    return get_research_data(ticker)
+    # sections = {k: to_paragraphs(extract_block(k, raw)) for k in KEYS}
+    # insert_research_data(ticker, sections)
+    # return get_research_data(ticker)

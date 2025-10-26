@@ -1,5 +1,5 @@
 import requests
-from .config import (
+from config import (
     FMP_API_KEY, 
     BALANCE_SHEET_API_URL, 
     INCOME_STATEMENT_API_URL, 
@@ -11,7 +11,7 @@ from .config import (
     LAVA_FORWARD_TOKEN,
     LLM_MODEL
 )
-from .query import (
+from query import (
     fetch_multiples, 
     fetch_userlist, 
     check_ticker_exists, 

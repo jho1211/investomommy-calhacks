@@ -1,4 +1,3 @@
-# dcf/router.py
 from fastapi import APIRouter, HTTPException, Query
 import os
 import math
@@ -7,9 +6,8 @@ import yfinance as yf
 import numpy as np
 from typing import Any, Dict, Tuple, List, Optional
 
-from .calc import dcf_valuation
+from dcf_calc import dcf_valuation
 
-# IMPORTANT: no local "/dcf" prefix here — server.py mounts us under "/api/dcf"
 router = APIRouter(tags=["DCF"])
 
 # ----------------------------------------------------------------------------

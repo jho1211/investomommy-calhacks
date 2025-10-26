@@ -2,6 +2,7 @@ import logging
 import traceback
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 # ---- your app code imports ----
 from model import (
@@ -23,6 +24,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("investomommy")
 
 app = FastAPI(title="InvestoMommy API")
+
+origins = [
+    "https://investomommy-calhacks.onrender.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Adjust this in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -------- Health + error handling --------
 @app.get("/health")

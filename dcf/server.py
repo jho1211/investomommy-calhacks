@@ -1,7 +1,7 @@
 # dcf/server.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from router import router  # ← keep as-is (since you run it from inside /dcf)
+from .router import router  # ← keep as-is (since you run it from inside /dcf)
 
 import os
 

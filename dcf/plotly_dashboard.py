@@ -43,7 +43,7 @@ def fetch(api_base: str, ticker: str, years: int = 10, midyear: bool = True) -> 
     return r.json()
 
 def make_heatmap(grid, wacc_axis, tg_axis):
-    # axis labels can be numeric or strings; format if numeric
+    """Enhanced heatmap with better color scale and styling"""
     if wacc_axis and isinstance(wacc_axis[0], (int, float)):
         wacc_labels = [f"{w*100:.2f}%" for w in wacc_axis]
     else:
@@ -54,61 +54,332 @@ def make_heatmap(grid, wacc_axis, tg_axis):
         tg_labels = tg_axis or ["g"]
 
     fig = go.Figure(data=go.Heatmap(
-        z=grid or [[None]], x=tg_labels, y=wacc_labels,
-        colorscale="Viridis",
-        colorbar=dict(title="IV / Share (USD)"),
-        hovertemplate="WACC %{y}<br>g %{x}<br>IV $%{z:.0f}<extra></extra>"
+        z=grid or [[None]], 
+        x=tg_labels, 
+        y=wacc_labels,
+        colorscale="Cividis",  # More impactful color scale
+        colorbar=dict(
+            title=dict(
+                text="Intrinsic Value<br>per Share",
+                font=dict(size=12, color="#e8edf2")
+            ),
+            tickfont=dict(size=11, color="#aab2bf"),
+            thickness=15,
+            len=0.7
+        ),
+        hovertemplate="<b>WACC:</b> %{y}<br><b>Terminal Growth:</b> %{x}<br><b>Intrinsic Value:</b> $%{z:.2f}<extra></extra>",
+        texttemplate="%{z:.0f}",
+        textfont={"size": 11, "color": "#ffffff"},
+        showscale=True
     ))
+    
     fig.update_layout(
         template="plotly_dark",
-        xaxis_title="Terminal Growth (g)",
-        yaxis_title="WACC",
-        margin=dict(l=70, r=20, t=10, b=60),
-        height=520
+        paper_bgcolor="#0f141a",
+        plot_bgcolor="#0f141a",
+        font=dict(family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color="#e8edf2"),
+        xaxis=dict(
+            title=dict(text="Terminal Growth Rate (g)", font=dict(size=13, color="#e8edf2")),
+            tickfont=dict(size=11, color="#aab2bf"),
+            showgrid=False
+        ),
+        yaxis=dict(
+            title=dict(text="Weighted Average Cost of Capital (WACC)", font=dict(size=13, color="#e8edf2")),
+            tickfont=dict(size=11, color="#aab2bf"),
+            showgrid=False
+        ),
+        margin=dict(l=100, r=40, t=20, b=70),
+        height=540,
+        hoverlabel=dict(
+            bgcolor="#1a1f26",
+            font_size=12,
+            font_family="Inter, sans-serif"
+        )
     )
+    
     return fig
 
 # --------- app factory ----------
 def create_app(api_base: str, default_ticker: str = "AAPL") -> Dash:
-    app = Dash(__name__, title="DCF Dev Dashboard")
+    app = Dash(__name__, title="DCF Valuation Dashboard")
+    
+    # Enhanced CSS styling
+    app.index_string = '''
+    <!DOCTYPE html>
+    <html>
+        <head>
+            {%metas%}
+            <title>{%title%}</title>
+            {%favicon%}
+            {%css%}
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+                /* Responsive KPI Grid */
+                .kpi-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 16px;
+                    margin-bottom: 20px;
+                }
+                @media (min-width: 1024px) {
+                    .kpi-grid {
+                        grid-template-columns: repeat(4, 1fr);
+                    }
+                }
+                /* KPI Card Styling */
+                .kpi-card {
+                    background: linear-gradient(135deg, #0f141a 0%, #151b22 100%);
+                    border: 1px solid #232b35;
+                    border-radius: 16px;
+                    padding: 20px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+                }
+                .kpi-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+                    border-color: #3a4556;
+                }
+                /* Input and Button Styling */
+                .input-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+                .ticker-input {
+                    background: linear-gradient(135deg, #151a1f 0%, #1a2028 100%);
+                    color: #e8edf2;
+                    border: 2px solid #232b35;
+                    border-radius: 12px;
+                    padding: 12px 16px;
+                    width: 180px;
+                    font-size: 15px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                    outline: none;
+                    letter-spacing: 0.5px;
+                }
+                .ticker-input:focus {
+                    border-color: #4a90e2;
+                    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+                }
+                .fetch-button {
+                    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 12px 28px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+                }
+                .fetch-button:hover {
+                    background: linear-gradient(135deg, #357abd 0%, #2a5f8f 100%);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.35);
+                }
+                .fetch-button:active {
+                    transform: translateY(0);
+                }
+                /* Status and Loading */
+                .status-text {
+                    margin-left: 16px;
+                    color: #aab2bf;
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+                /* Section Card */
+                .section-card {
+                    background: linear-gradient(135deg, #0f141a 0%, #151b22 100%);
+                    border: 1px solid #232b35;
+                    border-radius: 16px;
+                    padding: 24px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+                }
+                /* Table Styling */
+                .fcf-table {
+                    width: 100%;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                    font-size: 14px;
+                }
+                .fcf-table thead th {
+                    background: #1a2028;
+                    color: #e8edf2;
+                    font-weight: 600;
+                    text-align: left;
+                    padding: 14px 16px;
+                    border-bottom: 2px solid #232b35;
+                }
+                .fcf-table thead th:first-child {
+                    border-top-left-radius: 12px;
+                }
+                .fcf-table thead th:last-child {
+                    border-top-right-radius: 12px;
+                }
+                .fcf-table tbody tr {
+                    transition: background-color 0.2s ease;
+                }
+                .fcf-table tbody tr:nth-child(odd) {
+                    background: rgba(26, 32, 40, 0.3);
+                }
+                .fcf-table tbody tr:hover {
+                    background: rgba(74, 144, 226, 0.08);
+                }
+                .fcf-table tbody td {
+                    padding: 14px 16px;
+                    border-bottom: 1px solid #232b35;
+                    color: #e8edf2;
+                }
+                .fcf-table tbody tr:last-child td {
+                    border-bottom: none;
+                }
+                .fcf-table tbody tr:last-child td:first-child {
+                    border-bottom-left-radius: 12px;
+                }
+                .fcf-table tbody tr:last-child td:last-child {
+                    border-bottom-right-radius: 12px;
+                }
+                /* Loading Spinner */
+                .loading-overlay {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 40px;
+                }
+                .spinner {
+                    border: 3px solid #232b35;
+                    border-top: 3px solid #4a90e2;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        </head>
+        <body>
+            {%app_entry%}
+            <footer>
+                {%config%}
+                {%scripts%}
+                {%renderer%}
+            </footer>
+        </body>
+    </html>
+    '''
 
     app.layout = html.Div(
-        style={"background": "#0f1115", "color": "#e8edf2", "minHeight": "100vh", "padding": "18px"},
+        style={
+            "background": "linear-gradient(135deg, #0a0e13 0%, #0f1115 100%)",
+            "color": "#e8edf2",
+            "minHeight": "100vh",
+            "padding": "28px",
+            "fontFamily": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        },
         children=[
+            # Header
             html.Div([
-                html.H2("DCF — Dev Dashboard", style={"margin":"0 0 6px 0"}),
-                html.Div("Quick sanity-check of your FastAPI numbers. KPIs + WACC×g heatmap + FCFF components.", style={"color":"#aab2bf"})
-            ], style={"marginBottom":"12px"}),
+                html.H1(
+                    "DCF Valuation Dashboard",
+                    style={
+                        "margin": "0 0 8px 0",
+                        "fontSize": "32px",
+                        "fontWeight": "700",
+                        "background": "linear-gradient(135deg, #4a90e2 0%, #63b3ed 100%)",
+                        "WebkitBackgroundClip": "text",
+                        "WebkitTextFillColor": "transparent",
+                        "backgroundClip": "text"
+                    }
+                ),
+                html.P(
+                    "Real-time company-specific DCF analysis with dynamic WACC and sensitivity modeling",
+                    style={"color": "#aab2bf", "fontSize": "15px", "lineHeight": "1.6"}
+                )
+            ], style={"marginBottom": "28px"}),
 
+            # Input Controls
             html.Div([
-                dcc.Input(id="ticker", type="text", value=default_ticker, debounce=True,
-                          style={"background":"#151a1f","color":"#e8edf2","border":"1px solid #232b35",
-                                 "borderRadius":"8px","padding":"8px","width":"160px","marginRight":"8px"}),
-                html.Button("Fetch", id="fetch", n_clicks=0,
-                            style={"background":"#26323f","color":"#fff","border":"0","borderRadius":"8px","padding":"8px 12px"}),
-                dcc.Store(id="api-base", data=api_base),
-                html.Span(id="status", style={"marginLeft":"12px","color":"#aab2bf"})
-            ], style={"marginBottom":"14px"}),
+                html.Div(className="input-group", children=[
+                    dcc.Input(
+                        id="ticker",
+                        type="text",
+                        value=default_ticker,
+                        debounce=True,
+                        placeholder="Enter ticker...",
+                        className="ticker-input"
+                    ),
+                    html.Button("Fetch Valuation", id="fetch", n_clicks=0, className="fetch-button"),
+                    html.Span(id="status", className="status-text")
+                ]),
+                dcc.Store(id="api-base", data=api_base)
+            ], style={"marginBottom": "28px"}),
 
-            # KPIs
-            html.Div(id="kpis", style={"display":"grid","gridTemplateColumns":"repeat(1,1fr)","gap":"12px","marginBottom":"12px"}),
+            # Loading Wrapper
+            dcc.Loading(
+                id="loading",
+                type="default",
+                color="#4a90e2",
+                children=[
+                    # KPIs
+                    html.Div(id="kpis", className="kpi-grid"),
 
-            # Heatmap
-            html.Div([
-                html.H4("DCF Sensitivity (WACC × Terminal Growth)", style={"margin":"6px 0"}),
-                dcc.Graph(id="heat", style={"height":"520px"})
-            ], style={"background":"#151a1f","borderRadius":"12px","padding":"12px","boxShadow":"0 6px 18px rgba(0,0,0,.35)","marginBottom":"12px"}),
+                    # Heatmap
+                    html.Div(className="section-card", children=[
+                        html.H3(
+                            "DCF Sensitivity Analysis",
+                            style={
+                                "margin": "0 0 8px 0",
+                                "fontSize": "20px",
+                                "fontWeight": "600",
+                                "color": "#e8edf2"
+                            }
+                        ),
+                        html.P(
+                            "How intrinsic value changes across different WACC and terminal growth rate assumptions",
+                            style={"color": "#aab2bf", "fontSize": "13px", "marginBottom": "16px"}
+                        ),
+                        dcc.Graph(id="heat", style={"height": "540px"}, config={"displayModeBar": False})
+                    ]),
 
-            # FCFF components table
-            html.Div([
-                html.H4("Unlevered Free Cash Flow — What’s Included", style={"margin":"6px 0"}),
-                html.P([
-                    "FCFF is cash available to all investors before debt service. ",
-                    "Include: Revenue, COGS & Operating Expenses (inside EBIT), Taxes, D&A, ΔNWC, CapEx. ",
-                    "Ignore: Net Interest, Other Income/Expense, most non-cash one-offs, most of Cash Flow from Investing, and all of Cash Flow from Financing."
-                ], style={"color":"#aab2bf"}),
-                html.Div(id="fcf-table")
-            ], style={"background":"#151a1f","borderRadius":"12px","padding":"12px","boxShadow":"0 6px 18px rgba(0,0,0,.35)"}),
+                    # FCFF Table
+                    html.Div(className="section-card", children=[
+                        html.H3(
+                            "Free Cash Flow Components (TTM)",
+                            style={
+                                "margin": "0 0 8px 0",
+                                "fontSize": "20px",
+                                "fontWeight": "600",
+                                "color": "#e8edf2"
+                            }
+                        ),
+                        html.P(
+                            "Unlevered free cash flow represents cash available to all investors before debt service. "
+                            "Key components include operating profit (EBIT), taxes, depreciation & amortization, "
+                            "changes in net working capital, and capital expenditures.",
+                            style={"color": "#aab2bf", "fontSize": "13px", "lineHeight": "1.6", "marginBottom": "20px"}
+                        ),
+                        html.Div(id="fcf-table")
+                    ])
+                ]
+            )
         ]
     )
 
@@ -126,94 +397,191 @@ def create_app(api_base: str, default_ticker: str = "AAPL") -> Dash:
         try:
             d = fetch(api, tkr, years=10, midyear=True)
         except Exception as e:
-            return [], go.Figure(), html.Div(f"Error: {e}", style={"color":"#ef4444"}), "Fetch failed."
+            error_msg = html.Div(
+                f"⚠️ Error: {str(e)}",
+                style={"color": "#ef4444", "fontWeight": "500"}
+            )
+            return [], go.Figure(), error_msg, "❌ Fetch failed"
 
-        price    = get(d, "financials_snapshot", "totals", "price")
-        iv_base  = get(d, "valuation", "base_constant_wacc", "intrinsic_value_per_share")
-        iv_dyn   = get(d, "valuation", "dynamic_wacc", "intrinsic_value_per_share")
-        ev_base  = get(d, "valuation", "base_constant_wacc", "enterprise_value")
-        pv_tv    = get(d, "valuation", "base_constant_wacc", "pv_of_terminal_value")
+        # Extract data
+        price = get(d, "financials_snapshot", "totals", "price")
+        iv_base = get(d, "valuation", "base_constant_wacc", "intrinsic_value_per_share")
+        iv_dyn = get(d, "valuation", "dynamic_wacc", "intrinsic_value_per_share")
+        ev_base = get(d, "valuation", "base_constant_wacc", "enterprise_value")
+        pv_tv = get(d, "valuation", "base_constant_wacc", "pv_of_terminal_value")
 
-        wacc     = get(d, "assumptions", "wacc_base")
-        g_used   = get(d, "assumptions", "terminal_growth_used")
+        wacc = get(d, "assumptions", "wacc_base")
+        g_used = get(d, "assumptions", "terminal_growth_used")
         tv_share = (pv_tv / ev_base) if (pv_tv and ev_base) else None
 
-        base_up  = ((iv_base - price) / price) if (iv_base and price) else None
-        dyn_up   = ((iv_dyn  - price) / price) if (iv_dyn  and price) else None
+        base_up = ((iv_base - price) / price) if (iv_base and price) else None
+        dyn_up = ((iv_dyn - price) / price) if (iv_dyn and price) else None
 
         market_cap = get(d, "financials_snapshot", "totals", "market_cap")
-        shares     = get(d, "financials_snapshot", "totals", "shares_out")
+        shares = get(d, "financials_snapshot", "totals", "shares_out")
+        company_name = get(d, "company_name", default=tkr.upper())
 
-        # KPIs
-        kpi_style = {"background":"#0f141a","border":"1px solid #232b35","borderRadius":"12px","padding":"12px"}
+        # KPIs with enhanced styling
         kpis = [
-            html.Div([
-                html.Div("Intrinsic Value / Share (Base)", style={"color":"#96a0ac","fontSize":"12px"}),
-                html.Div(fmt_usd(iv_base), style={"fontSize":"20px","fontWeight":"700"}),
-                html.Div(["vs Price ", fmt_usd(price), " → ",
-                          html.Span(f"{base_up*100:.1f}%" if base_up is not None else "—",
-                                    style={"color":"#10b981" if (base_up or 0)>=0 else "#ef4444"})],
-                         style={"fontSize":"12px","marginTop":"4px"})
-            ], style=kpi_style),
-            html.Div([
-                html.Div("Intrinsic Value / Share (Dynamic)", style={"color":"#96a0ac","fontSize":"12px"}),
-                html.Div(fmt_usd(iv_dyn), style={"fontSize":"20px","fontWeight":"700"}),
-                html.Div(["vs Price ", fmt_usd(price), " → ",
-                          html.Span(f"{dyn_up*100:.1f}%" if dyn_up is not None else "—",
-                                    style={"color":"#10b981" if (dyn_up or 0)>=0 else "#ef4444"})],
-                         style={"fontSize":"12px","marginTop":"4px"})
-            ], style=kpi_style),
-            html.Div([
-                html.Div("WACC / Terminal g", style={"color":"#96a0ac","fontSize":"12px"}),
-                html.Div(f"{pct(wacc)} / {pct(g_used)}", style={"fontSize":"20px","fontWeight":"700"}),
-                html.Div(["TV share of EV: ", html.B(pct(tv_share))], style={"fontSize":"12px","marginTop":"4px"})
-            ], style=kpi_style),
-            html.Div([
-                html.Div("Market Snapshot", style={"color":"#96a0ac","fontSize":"12px"}),
-                html.Div(fmt_usd(market_cap, True), style={"fontSize":"20px","fontWeight":"700"}),
-                html.Div(f"Shares: {fmt_num(shares)}", style={"fontSize":"12px","marginTop":"4px"})
-            ], style=kpi_style),
+            html.Div(className="kpi-card", children=[
+                html.Div("Intrinsic Value (Constant WACC)", style={
+                    "color": "#96a0ac",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.5px",
+                    "marginBottom": "8px"
+                }),
+                html.Div(fmt_usd(iv_base), style={
+                    "fontSize": "28px",
+                    "fontWeight": "700",
+                    "color": "#e8edf2",
+                    "marginBottom": "8px"
+                }),
+                html.Div([
+                    html.Span("Market: ", style={"color": "#96a0ac"}),
+                    html.Span(fmt_usd(price), style={"color": "#e8edf2", "fontWeight": "500"}),
+                    html.Span(" • ", style={"color": "#96a0ac", "margin": "0 6px"}),
+                    html.Span(
+                        f"{base_up*100:+.1f}%" if base_up is not None else "—",
+                        style={
+                            "color": "#10b981" if (base_up or 0) >= 0 else "#ef4444",
+                            "fontWeight": "600"
+                        }
+                    )
+                ], style={"fontSize": "13px"})
+            ]),
+            
+            html.Div(className="kpi-card", children=[
+                html.Div("Intrinsic Value (Dynamic WACC)", style={
+                    "color": "#96a0ac",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.5px",
+                    "marginBottom": "8px"
+                }),
+                html.Div(fmt_usd(iv_dyn), style={
+                    "fontSize": "28px",
+                    "fontWeight": "700",
+                    "color": "#e8edf2",
+                    "marginBottom": "8px"
+                }),
+                html.Div([
+                    html.Span("Market: ", style={"color": "#96a0ac"}),
+                    html.Span(fmt_usd(price), style={"color": "#e8edf2", "fontWeight": "500"}),
+                    html.Span(" • ", style={"color": "#96a0ac", "margin": "0 6px"}),
+                    html.Span(
+                        f"{dyn_up*100:+.1f}%" if dyn_up is not None else "—",
+                        style={
+                            "color": "#10b981" if (dyn_up or 0) >= 0 else "#ef4444",
+                            "fontWeight": "600"
+                        }
+                    )
+                ], style={"fontSize": "13px"})
+            ]),
+            
+            html.Div(className="kpi-card", children=[
+                html.Div("WACC & Terminal Growth", style={
+                    "color": "#96a0ac",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.5px",
+                    "marginBottom": "8px"
+                }),
+                html.Div(f"{pct(wacc)} / {pct(g_used)}", style={
+                    "fontSize": "28px",
+                    "fontWeight": "700",
+                    "color": "#e8edf2",
+                    "marginBottom": "8px"
+                }),
+                html.Div([
+                    html.Span("Terminal Value: ", style={"color": "#96a0ac"}),
+                    html.Span(pct(tv_share), style={"color": "#4a90e2", "fontWeight": "600"}),
+                    html.Span(" of EV", style={"color": "#96a0ac"})
+                ], style={"fontSize": "13px"})
+            ]),
+            
+            html.Div(className="kpi-card", children=[
+                html.Div(company_name, style={
+                    "color": "#96a0ac",
+                    "fontSize": "12px",
+                    "fontWeight": "500",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.5px",
+                    "marginBottom": "8px"
+                }),
+                html.Div(fmt_usd(market_cap, True), style={
+                    "fontSize": "28px",
+                    "fontWeight": "700",
+                    "color": "#e8edf2",
+                    "marginBottom": "8px"
+                }),
+                html.Div([
+                    html.Span("Shares: ", style={"color": "#96a0ac"}),
+                    html.Span(fmt_num(shares), style={"color": "#e8edf2", "fontWeight": "500"})
+                ], style={"fontSize": "13px"})
+            ])
         ]
 
         # Heatmap
-        grid      = get(d, "valuation", "sensitivity", "grid_wacc_rows_tg_cols", default=[])
+        grid = get(d, "valuation", "sensitivity", "grid_wacc_rows_tg_cols", default=[])
         wacc_axis = get(d, "valuation", "sensitivity", "wacc_axis", default=[])
-        tg_axis   = get(d, "valuation", "sensitivity", "tg_axis", default=[])
-        fig_heat  = make_heatmap(grid, wacc_axis, tg_axis)
+        tg_axis = get(d, "valuation", "sensitivity", "tg_axis", default=[])
+        fig_heat = make_heatmap(grid, wacc_axis, tg_axis)
 
-        # FCFF components table
-        comps     = get(d, "assumptions", "fcff_start_method", "components", default={})
-        ebit_ttm  = comps.get("EBIT_TTM")
-        da_ttm    = comps.get("D&A_TTM")
+        # FCFF Table
+        comps = get(d, "assumptions", "fcff_start_method", "components", default={})
+        ebit_ttm = comps.get("EBIT_TTM")
+        da_ttm = comps.get("D&A_TTM")
         capex_ttm = comps.get("CapEx_TTM")
-        dnwc_ttm  = comps.get("ΔNWC_TTM")
-        eff_tax   = get(d, "assumptions", "effective_tax_rate")
+        dnwc_ttm = comps.get("ΔNWC_TTM")
+        eff_tax = get(d, "assumptions", "effective_tax_rate")
 
-        taxes_est = (ebit_ttm * eff_tax) if (isinstance(ebit_ttm,(int,float)) and isinstance(eff_tax,(int,float))) else None
+        taxes_est = (ebit_ttm * eff_tax) if (isinstance(ebit_ttm, (int, float)) and isinstance(eff_tax, (int, float))) else None
 
         rows = [
-            ("Revenue (last annual)", fmt_usd(get(d,"financials_snapshot","totals","total_revenue"), True), "Top-line sales for the last reported fiscal year."),
-            ("EBIT (TTM)",            fmt_usd(ebit_ttm, True), "Operating profit before interest & taxes (TTM)."),
-            ("Taxes (est.)",          fmt_usd(taxes_est, True) if taxes_est is not None else "—", "EBIT × effective tax rate."),
-            ("Depreciation & Amortization (TTM)", fmt_usd(da_ttm, True), "Non-cash add-back."),
-            ("Change in Working Capital (ΔNWC, TTM)", fmt_usd(dnwc_ttm, True), "Increase = cash outflow; decrease = cash inflow."),
-            ("Capital Expenditures (TTM)", fmt_usd(capex_ttm, True), "Investments in PP&E and similar long-lived assets."),
+            ("Revenue (Last Annual)", fmt_usd(get(d, "financials_snapshot", "totals", "total_revenue"), True), 
+             "Top-line sales for the most recent fiscal year"),
+            ("Operating Profit (EBIT, TTM)", fmt_usd(ebit_ttm, True), 
+             "Earnings before interest and taxes over trailing twelve months"),
+            ("Estimated Tax Expense", fmt_usd(taxes_est, True) if taxes_est is not None else "—", 
+             "EBIT multiplied by effective tax rate"),
+            ("Depreciation & Amortization (TTM)", fmt_usd(da_ttm, True), 
+             "Non-cash expense added back to cash flow"),
+            ("Change in Net Working Capital (TTM)", fmt_usd(dnwc_ttm, True), 
+             "Increase in NWC is cash outflow; decrease is cash inflow"),
+            ("Capital Expenditures (TTM)", fmt_usd(capex_ttm, True), 
+             "Cash spent on property, plant, equipment, and other long-term assets")
         ]
-        table = html.Table([
-            html.Thead(html.Tr([html.Th("Line Item"), html.Th("Figure", style={"textAlign":"right"}), html.Th("Explanation")])),
-            html.Tbody([html.Tr([html.Td(a), html.Td(b, style={"textAlign":"right"}), html.Td(c, style={"color":"#aab2bf"})]) for a,b,c in rows])
-        ], style={"width":"100%","borderCollapse":"collapse"})
 
-        return kpis, fig_heat, table, "OK"
+        table = html.Table(className="fcf-table", children=[
+            html.Thead(html.Tr([
+                html.Th("Component", style={"width": "25%"}),
+                html.Th("Amount", style={"width": "15%", "textAlign": "right"}),
+                html.Th("Description", style={"width": "60%"})
+            ])),
+            html.Tbody([
+                html.Tr([
+                    html.Td(a, style={"fontWeight": "500"}),
+                    html.Td(b, style={"textAlign": "right", "fontWeight": "600", "color": "#4a90e2"}),
+                    html.Td(c, style={"color": "#aab2bf", "fontSize": "13px"})
+                ]) for a, b, c in rows
+            ])
+        ])
+
+        return kpis, fig_heat, table, f"✓ {company_name} loaded successfully"
 
     return app
 
 # --------- entrypoint ----------
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="Run the lean DCF dev dashboard.")
+    ap = argparse.ArgumentParser(description="Run the enhanced DCF valuation dashboard.")
     ap.add_argument("--api", default="http://127.0.0.1:8000", help="FastAPI base URL")
-    ap.add_argument("--ticker", default="AAPL", help="Default ticker")
+    ap.add_argument("--ticker", default="AAPL", help="Default ticker symbol")
     args = ap.parse_args()
 
     app = create_app(args.api, args.ticker)
     app.run(host="127.0.0.1", port=8050, debug=True)
+    

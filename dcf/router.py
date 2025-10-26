@@ -1,27 +1,104 @@
 # dcf/router.py
 from fastapi import APIRouter, HTTPException, Query
+import os
+import math
+import requests
 import yfinance as yf
 import numpy as np
-import math
-from .calc import dcf_valuation  # keep this import
+from typing import Any, Dict, Tuple, List, Optional
 
-router = APIRouter(prefix="/api/dcf", tags=["DCF"])
+from .calc import dcf_valuation
 
-# ----------------- utils -----------------
-def safe(val, default=0.0):
+# IMPORTANT: no local "/dcf" prefix here — server.py mounts us under "/api/dcf"
+router = APIRouter(tags=["DCF"])
+
+# ----------------------------------------------------------------------------
+# COMPANY-SPECIFIC DATA STORE
+# ----------------------------------------------------------------------------
+COMPANY_DATA = {
+    "AAPL": {
+        "company_name": "Apple Inc.",
+        "beta": 1.25,
+        "risk_free_rate": 0.045,
+        "equity_risk_premium": 0.055,
+        "cost_of_debt_pretax": 0.035,
+        "tax_rate": 0.15,
+        "debt_to_equity": 1.57,
+        "terminal_growth": 0.035,
+        "market_cap": 3.5e12,
+        "total_debt": 1.1e11,
+        "profile": "mature, low-risk, stable cash flows"
+    },
+    "TSLA": {
+        "company_name": "Tesla Inc.",
+        "beta": 2.05,
+        "risk_free_rate": 0.045,
+        "equity_risk_premium": 0.055,
+        "cost_of_debt_pretax": 0.065,
+        "tax_rate": 0.21,
+        "debt_to_equity": 0.15,
+        "terminal_growth": 0.045,
+        "market_cap": 8e11,
+        "total_debt": 1.2e10,
+        "profile": "high-growth, high-risk, volatile"
+    },
+    "KO": {
+        "company_name": "The Coca-Cola Company",
+        "beta": 0.65,
+        "risk_free_rate": 0.045,
+        "equity_risk_premium": 0.055,
+        "cost_of_debt_pretax": 0.030,
+        "tax_rate": 0.21,
+        "debt_to_equity": 1.85,
+        "terminal_growth": 0.025,
+        "market_cap": 2.5e11,
+        "total_debt": 4.0e10,
+        "profile": "defensive, very low-risk, saturated market"
+    },
+    "MSFT": {
+        "company_name": "Microsoft Corporation",
+        "beta": 1.15,
+        "risk_free_rate": 0.045,
+        "equity_risk_premium": 0.055,
+        "cost_of_debt_pretax": 0.032,
+        "tax_rate": 0.16,
+        "debt_to_equity": 0.45,
+        "terminal_growth": 0.035,
+        "market_cap": 3.1e12,
+        "total_debt": 7.5e10,
+        "profile": "mature tech, moderate-risk, steady growth"
+    },
+    "GOOGL": {
+        "company_name": "Alphabet Inc.",
+        "beta": 1.10,
+        "risk_free_rate": 0.045,
+        "equity_risk_premium": 0.055,
+        "cost_of_debt_pretax": 0.028,
+        "tax_rate": 0.15,
+        "debt_to_equity": 0.08,
+        "terminal_growth": 0.040,
+        "market_cap": 2.0e12,
+        "total_debt": 1.3e10,
+        "profile": "tech giant, low debt, moderate growth"
+    }
+}
+
+# ----------------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------------
+def safe(val, default=0.0) -> float:
     try:
         return float(val) if val is not None else float(default)
     except Exception:
         return float(default)
 
-def clamp(x, lo, hi):
+def clamp(x: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, x))
 
 def nz(x, alt):
     return x if x is not None else alt
 
-def _row(df, name):
-    """Safe row getter by index label."""
+def _row(df, name: str):
     try:
         if df is not None and not df.empty and isinstance(name, str) and (name in df.index):
             return df.loc[name]
@@ -29,8 +106,7 @@ def _row(df, name):
         pass
     return None
 
-def _first(row):
-    """First (most recent) column value of a row Series (yfinance quarterly/annual are most-recent at iloc[0])."""
+def _first(row) -> float:
     try:
         if row is not None and hasattr(row, "iloc") and len(row) > 0:
             return float(row.iloc[0])
@@ -38,8 +114,7 @@ def _first(row):
         pass
     return np.nan
 
-def _series_vals(row, max_n=5):
-    """Return up to max_n numeric values from a row (most recent first)."""
+def _series_vals(row, max_n=5) -> List[float]:
     try:
         if row is not None and hasattr(row, "dropna"):
             vals = row.dropna().astype(float).values
@@ -49,7 +124,6 @@ def _series_vals(row, max_n=5):
     return []
 
 def _clean_num(x):
-    """Return a finite float or None."""
     try:
         xf = float(x)
         if math.isfinite(xf):
@@ -59,7 +133,6 @@ def _clean_num(x):
     return None
 
 def _clean(obj):
-    """Recursively replace NaN/Inf with None for JSON."""
     if isinstance(obj, dict):
         return {k: _clean(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
@@ -69,7 +142,6 @@ def _clean(obj):
     return obj
 
 def _qsum(row, n=4):
-    """Sum last n quarterly values for a TTM approximation."""
     try:
         if row is not None and hasattr(row, "dropna"):
             vals = row.dropna().astype(float).values[:n]
@@ -78,161 +150,47 @@ def _qsum(row, n=4):
         pass
     return np.nan
 
-# ----------------- market & risk inputs -----------------
-def fetch_risk_free_rate() -> float:
-    """U.S. 10Y (^TNX), yfinance returns percent*10; divide by 100."""
+FMP_API_KEY = os.environ.get("FMP_API_KEY")
+
+def _fmp_get(path: str) -> Optional[Any]:
+    if not FMP_API_KEY:
+        return None
+    base = "https://financialmodelingprep.com/api/v3"
+    url = f"{base}/{path}{'&' if ('?' in path) else '?'}apikey={FMP_API_KEY}"
     try:
-        tnx = yf.Ticker("^TNX").history(period="10d")
-        if tnx is not None and not tnx.empty and "Close" in tnx:
-            close = tnx["Close"].dropna()
-            if len(close) > 0:
-                rf = float(close.iloc[-1]) / 100.0
-                return clamp(rf, 0.02, 0.07)
+        r = requests.get(url, timeout=15)
+        if r.ok:
+            return r.json()
     except Exception:
         pass
-    return 0.04
+    return None
 
-def compute_effective_tax_rate(tkr: yf.Ticker) -> float:
-    """Effective tax = Income Tax Expense / Income Before Tax (fallback 21%)."""
-    try:
-        fin = tkr.financials
-        if fin is not None and not fin.empty:
-            tax = safe(_first(_row(fin, "Income Tax Expense")), np.nan)
-            pre = safe(_first(_row(fin, "Income Before Tax")), np.nan)
-            if np.isfinite(tax) and np.isfinite(pre) and pre != 0.0:
-                return clamp(tax / pre, 0.00, 0.35)
-    except Exception:
-        pass
-    return 0.21
+def enrich_with_fmp(info: Dict[str, Any], ticker: str) -> Dict[str, Any]:
+    out = dict(info or {})
+    prof = _fmp_get(f"profile/{ticker.upper()}")
+    if isinstance(prof, list) and prof:
+        p = prof[0]
+        out.setdefault("marketCap", p.get("mktCap"))
+        out.setdefault("sharesOutstanding", p.get("sharesOutstanding"))
+        out.setdefault("impliedSharesOutstanding", p.get("sharesOutstanding"))
 
-# --------- beta / costs ----------
-def compute_beta_historical(ticker: str, market: str = "^GSPC"):
-    """Weekly beta over ~2 years vs S&P500 (^GSPC)."""
-    diag = {"points": 0, "period": "2y", "freq": "1wk", "method": "cov/var"}
-    try:
-        s_hist = yf.Ticker(ticker).history(period="2y", interval="1wk")
-        m_hist = yf.Ticker(market).history(period="2y", interval="1wk")
-        if s_hist is not None and not s_hist.empty and m_hist is not None and not m_hist.empty:
-            if "Close" in s_hist and "Close" in m_hist:
-                s = s_hist["Close"].dropna()
-                m = m_hist["Close"].dropna()
-                idx = s.index.intersection(m.index)
-                s, m = s.loc[idx], m.loc[idx]
-                if len(s) >= 26 and len(m) >= 26:
-                    rs = np.diff(np.log(s.values))
-                    rm = np.diff(np.log(m.values))
-                    diag["points"] = int(len(rs))
-                    vm = np.var(rm, ddof=1)
-                    if vm > 0:
-                        cov = np.cov(rs, rm, ddof=1)[0, 1]
-                        beta = cov / vm
-                        return clamp(float(beta), 0.2, 3.0), diag
-    except Exception:
-        pass
-    return float("nan"), diag
+    quote = _fmp_get(f"quote/{ticker.upper()}")
+    if isinstance(quote, list) and quote:
+        q = quote[0]
+        out.setdefault("currentPrice", q.get("price"))
+        out.setdefault("regularMarketPrice", q.get("price"))
 
-def compute_beta(info: dict, ticker: str):
-    """Blend historical beta (70%) with Yahoo info beta (30%)."""
-    b_info_raw = info.get("beta")
-    b_info = None
-    try:
-        if b_info_raw is not None:
-            b_info = clamp(float(b_info_raw), 0.2, 3.0)
-    except Exception:
-        b_info = None
+    bsq = _fmp_get(f"balance-sheet-statement/{ticker.upper()}?period=quarter&limit=2")
+    if isinstance(bsq, list) and bsq:
+        bs0 = bsq[0]
+        total_debt = bs0.get("totalDebt") or ((bs0.get("shortTermDebt") or 0) + (bs0.get("longTermDebt") or 0))
+        out.setdefault("totalDebt", total_debt)
+        cash_like = (bs0.get("cashAndCashEquivalents") or 0) + (bs0.get("shortTermInvestments") or 0)
+        out.setdefault("totalCash", cash_like if cash_like else None)
+    return out
 
-    b_hist, diag_hist = compute_beta_historical(ticker)
-    has_hist, has_info = np.isfinite(b_hist), (b_info is not None)
-
-    if has_hist and has_info:
-        b = 0.7 * b_hist + 0.3 * b_info
-        src = "blend(70% hist, 30% info)"
-    elif has_hist:
-        b, src = b_hist, "historical"
-    elif has_info:
-        b, src = b_info, "info"
-    else:
-        b, src = 1.0, "fallback"
-
-    return clamp(b, 0.2, 3.0), {"source": src, "hist_diag": diag_hist, "info_beta": b_info_raw}
-
-def market_risk_premium_with_size(info: dict, base_mrp: float = 0.0475) -> float:
-    """Size tilt: mega-caps slightly lower, small-caps slightly higher."""
-    mc = safe(info.get("marketCap"), 0.0)
-    adj = -0.005 if mc >= 5e11 else (0.01 if (mc and mc <= 1e10) else 0.0)
-    return clamp(base_mrp + adj, 0.035, 0.07)
-
-def compute_cost_of_equity(rf: float, beta: float, mrp: float) -> float:
-    return clamp(rf + beta * mrp, 0.05, 0.16)
-
-def compute_cost_of_debt_after_tax(tkr: yf.Ticker, tax_rate: float, rf: float):
-    """
-    After-tax CoD:
-      1) avg(Interest Expense TTM)/avg(Debt last 4Q)  -> * (1 - tax)
-      2) If missing: map Interest Coverage to spread (pre-tax = rf + spread)
-      3) Fallback: rf + 1.5% (pre-tax)
-    """
-    diag = {"method": None}
-    try:
-        # Route 1: average quarterly interest / average total debt (more stable)
-        fin_q, bs_q = tkr.quarterly_financials, tkr.quarterly_balance_sheet
-        if fin_q is not None and not fin_q.empty and bs_q is not None and not bs_q.empty:
-            int_row = _row(fin_q, "Interest Expense")
-            debt_row = _row(bs_q, "Total Debt")
-            if int_row is not None and debt_row is not None:
-                interest_4q = _qsum(int_row, 4)
-                debt_vals = _series_vals(debt_row, max_n=4)
-                avg_debt = float(np.nanmean(debt_vals)) if len(debt_vals) > 0 else np.nan
-                if np.isfinite(interest_4q) and np.isfinite(avg_debt) and avg_debt > 0:
-                    pretax = clamp(abs(interest_4q) / avg_debt, 0.01, 0.12)
-                    diag.update({"method": "avg(Interest_TTM)/avg(Debt_4Q)", "pretax_cod": pretax})
-                    return pretax * (1.0 - tax_rate), diag
-
-        # Route 2: coverage -> spread (annual)
-        fin = tkr.financials
-        ebit = _first(_row(fin, "Ebit")) if (fin is not None and not fin.empty) else np.nan
-        if not np.isfinite(ebit) and (fin is not None and not fin.empty):
-            ebit = _first(_row(fin, "Operating Income"))
-        interest_exp = _first(_row(fin, "Interest Expense")) if (fin is not None and not fin.empty) else np.nan
-
-        if np.isfinite(ebit) and np.isfinite(interest_exp) and interest_exp != 0.0:
-            coverage = abs(ebit / interest_exp)
-            if coverage >= 12: spread = 0.010
-            elif coverage >= 8: spread = 0.015
-            elif coverage >= 6: spread = 0.020
-            elif coverage >= 4: spread = 0.025
-            elif coverage >= 3: spread = 0.030
-            elif coverage >= 2: spread = 0.040
-            elif coverage >= 1: spread = 0.060
-            else:               spread = 0.080
-            pretax = clamp(rf + spread, 0.03, 0.16)
-            diag.update({"method": "coverage->spread", "coverage": coverage, "pretax_cod": pretax})
-            return pretax * (1.0 - tax_rate), diag
-    except Exception:
-        pass
-
-    # Fallback
-    pretax = clamp(rf + 0.015, 0.03, 0.12)
-    diag.update({"method": "fallback", "pretax_cod": pretax})
-    return pretax * (1.0 - tax_rate), diag
-
-def compute_wacc(info: dict, coe: float, cod_after_tax: float) -> float:
-    E = max(safe(info.get("marketCap"), 0.0), 0.0)
-    D = max(safe(info.get("totalDebt"), 0.0), 0.0)
-    V = E + D
-    if V <= 0.0:
-        return coe
-    we, wd = E / V, D / V
-    return clamp(we * coe + wd * cod_after_tax, 0.05, 0.15)
-
-# ----------------- cash-like assets -----------------
 def compute_cash_like(info: dict, bs) -> float:
-    """
-    Use cash + short-term investments + marketable securities if available.
-    Yahoo 'totalCash' can understate cash-like assets.
-    """
     cash = safe(info.get("totalCash"), 0.0)
-
     if bs is not None and not bs.empty:
         cs_row = _row(bs, "Cash And Short Term Investments")
         sti_row = _row(bs, "Short Term Investments")
@@ -242,29 +200,24 @@ def compute_cash_like(info: dict, bs) -> float:
             try:
                 if r is not None:
                     v = _first(r)
-                    if np.isfinite(v): extras += float(v)
+                    if np.isfinite(v):
+                        extras += float(v)
             except Exception:
                 pass
         cash = max(cash, extras)
-
     return cash
 
-# ----------------- ΔNWC & FCFF (TTM, quarterly) -----------------
 def compute_delta_nwc_quarterly(bs_q) -> float:
-    """
-    ΔNWC_TTM = NWC(t) - NWC(t-1),
-    with NWC ≈ (Current Assets - Cash) - (Current Liabilities - Short-term Debt).
-    """
     if bs_q is None or bs_q.empty:
         return 0.0
 
     def series_vals(name):
         return _series_vals(_row(bs_q, name), max_n=2)
 
-    tca  = series_vals("Total Current Assets")
-    tcl  = series_vals("Total Current Liabilities")
+    tca = series_vals("Total Current Assets")
+    tcl = series_vals("Total Current Liabilities")
     cash = series_vals("Cash And Cash Equivalents") or series_vals("Cash")
-    std  = series_vals("Short Long Term Debt") or series_vals("Short/Current Long Term Debt")
+    std = series_vals("Short Long Term Debt") or series_vals("Short/Current Long Term Debt")
 
     def v(a, i):
         try:
@@ -274,57 +227,99 @@ def compute_delta_nwc_quarterly(bs_q) -> float:
 
     ca0, ca1 = v(tca, 0), v(tca, 1)
     cl0, cl1 = v(tcl, 0), v(tcl, 1)
-    c0,  c1  = v(cash, 0), v(cash, 1)
-    sd0, sd1 = v(std, 0),  v(std, 1)
+    c0, c1 = v(cash, 0), v(cash, 1)
+    sd0, sd1 = v(std, 0), v(std, 1)
 
     nwc0 = (ca0 - c0) - (cl0 - sd0)
     nwc1 = (ca1 - c1) - (cl1 - sd1)
     return nwc0 - nwc1
 
-def fcff_from_statements(tkr: yf.Ticker, eff_tax: float) -> tuple[float, dict]:
-    """
-    FCFF_TTM = EBIT_TTM*(1-T) + D&A_TTM - CapEx_TTM - ΔNWC_TTM
-    Derived from most recent quarterly data (TTM) with fallbacks.
-    """
+def calculate_cost_of_equity(beta: float, rf: float, erp: float) -> float:
+    return rf + (beta * erp)
+
+def calculate_wacc_from_company_data(company_data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
+    beta = company_data["beta"]
+    rf = company_data["risk_free_rate"]
+    erp = company_data["equity_risk_premium"]
+    rd_pretax = company_data["cost_of_debt_pretax"]
+    tax_rate = company_data["tax_rate"]
+    de_ratio = company_data["debt_to_equity"]
+
+    re = calculate_cost_of_equity(beta, rf, erp)
+    rd_after_tax = rd_pretax * (1 - tax_rate)
+
+    total_capital = 1 + de_ratio
+    equity_weight = 1 / total_capital
+    debt_weight = de_ratio / total_capital
+
+    wacc = (equity_weight * re) + (debt_weight * rd_after_tax)
+    wacc = clamp(wacc, 0.05, 0.15)
+
+    details = {
+        "cost_of_equity": re,
+        "cost_of_debt_pretax": rd_pretax,
+        "cost_of_debt_after_tax": rd_after_tax,
+        "equity_weight": equity_weight,
+        "debt_weight": debt_weight,
+        "beta": beta,
+        "risk_free_rate": rf,
+        "equity_risk_premium": erp,
+        "tax_rate": tax_rate,
+        "debt_to_equity_ratio": de_ratio,
+        "source": "company_specific_database"
+    }
+    return wacc, details
+
+def compute_effective_tax_rate(tkr: yf.Ticker, company_data: Dict[str, Any]) -> float:
+    try:
+        fin = tkr.financials
+        if fin is not None and not fin.empty:
+            tax = safe(_first(_row(fin, "Income Tax Expense")), np.nan)
+            pre = safe(_first(_row(fin, "Income Before Tax")), np.nan)
+            if np.isfinite(tax) and np.isfinite(pre) and pre != 0.0:
+                return clamp(tax / pre, 0.00, 0.35)
+    except Exception:
+        pass
+    if company_data and "tax_rate" in company_data:
+        return company_data["tax_rate"]
+    return 0.21
+
+def fcff_from_statements(tkr: yf.Ticker, eff_tax: float) -> Tuple[float, Dict[str, Any]]:
     fin_q = tkr.quarterly_financials
-    cf_q  = tkr.quarterly_cashflow
-    bs_q  = tkr.quarterly_balance_sheet
+    cf_q = tkr.quarterly_cashflow
+    bs_q = tkr.quarterly_balance_sheet
     diag = {"components": {}, "source_quality": "ok"}
 
-    # EBIT TTM
     ebit_ttm = np.nan
     for lab in ["Ebit", "Operating Income"]:
         if fin_q is not None and not fin_q.empty and lab in fin_q.index:
             ebit_ttm = _qsum(_row(fin_q, lab), 4)
-            if np.isfinite(ebit_ttm): break
+            if np.isfinite(ebit_ttm):
+                break
     diag["components"]["EBIT_TTM"] = ebit_ttm
 
-    # D&A TTM
     da_ttm = np.nan
     if cf_q is not None and not cf_q.empty:
         for lab in ["Depreciation", "Depreciation & Amortization", "Depreciation Amortization Depletion", "DepreciationAndAmortization"]:
             if lab in cf_q.index:
                 da_ttm = _qsum(_row(cf_q, lab), 4)
-                if np.isfinite(da_ttm): break
+                if np.isfinite(da_ttm):
+                    break
     diag["components"]["D&A_TTM"] = da_ttm
 
-    # CapEx TTM (absolute value of cash outflow)
     capex_ttm = np.nan
     if cf_q is not None and not cf_q.empty and "Capital Expenditures" in cf_q.index:
         capex_ttm = abs(_qsum(_row(cf_q, "Capital Expenditures"), 4))
     diag["components"]["CapEx_TTM"] = capex_ttm
 
-    # ΔNWC TTM
     delta_nwc_ttm = compute_delta_nwc_quarterly(bs_q)
     diag["components"]["ΔNWC_TTM"] = delta_nwc_ttm
 
-    # FCFF_TTM
     if all(np.isfinite(v) for v in [ebit_ttm, da_ttm, capex_ttm]) and np.isfinite(delta_nwc_ttm):
         fcff0 = ebit_ttm * (1.0 - eff_tax) + da_ttm - capex_ttm - delta_nwc_ttm
         diag["method"] = "EBIT(1-T)+DA-CapEx-ΔNWC (TTM, quarterly)"
         return float(fcff0), diag
 
-    # Fallbacks
     cf = tkr.cashflow
     if cf is not None and not cf.empty and ("Free Cash Flow" in cf.index):
         vals = _series_vals(_row(cf, "Free Cash Flow"), max_n=1)
@@ -337,16 +332,14 @@ def fcff_from_statements(tkr: yf.Ticker, eff_tax: float) -> tuple[float, dict]:
         diag["method"] = "Fallback OCF - CapEx"
         return float(ocf - capex_ttm), diag
 
-    diag["method"] = "Fallback info.freeCashflow/operatingCashflow"
     info = tkr.info or {}
     fcff0 = safe(info.get("freeCashflow") or info.get("operatingCashflow"), 0.0)
+    diag["method"] = "Fallback info.freeCashflow/operatingCashflow"
     return float(fcff0), diag
 
-# ----------------- growths -----------------
-def estimate_growths(tkr: yf.Ticker, horizon: int) -> dict:
+def estimate_growths(tkr: yf.Ticker, horizon: int, company_data: Dict[str, Any]) -> dict:
     info, fin, cf = tkr.info or {}, tkr.financials, tkr.cashflow
 
-    # FCFF history for CAGR (if available)
     fcff_hist = []
     if cf is not None and not cf.empty:
         if "Free Cash Flow" in cf.index:
@@ -361,7 +354,6 @@ def estimate_growths(tkr: yf.Ticker, horizon: int) -> dict:
         if oldest > 0 and n > 0:
             g_fcff_hist = clamp((recent / oldest) ** (1.0 / n) - 1.0, 0.0, 0.25)
 
-    # Revenue CAGR (3–5 points)
     g_rev_cagr = np.nan
     if fin is not None and not fin.empty and ("Total Revenue" in fin.index):
         rev = _series_vals(_row(fin, "Total Revenue"), max_n=5)
@@ -370,13 +362,11 @@ def estimate_growths(tkr: yf.Ticker, horizon: int) -> dict:
             n = len(rev) - 1
             g_rev_cagr = clamp((recent / oldest) ** (1.0 / n) - 1.0, -0.2, 0.25)
 
-    # Blend: FCFF has more weight
     if np.isfinite(g_rev_cagr):
         g_used = clamp(0.7 * g_fcff_hist + 0.3 * g_rev_cagr, -0.05, 0.20)
     else:
         g_used = g_fcff_hist
 
-    # Decaying path
     growth_path = []
     for i in range(1, horizon + 1):
         decayed = g_used * (0.8 ** (i / horizon))
@@ -389,75 +379,6 @@ def estimate_growths(tkr: yf.Ticker, horizon: int) -> dict:
         "growth_path": growth_path,
     }
 
-# ----------------- terminal growth -----------------
-def compute_terminal_growth_enhanced(rf: float, g_hist: float, rev_cagr: float | None, margins: float | None) -> float:
-    """
-    TG anchored to nominal growth and rf, tempered by firm specifics.
-      base_nominal ≈ 4.0%
-      tg = 0.4*base_nominal + 0.4*rf + 0.2*max(g_hist, rev_cagr)
-      margin nudge: +30bps if op margin >25%, -30bps if <10%
-      guardrails: 2.0%–5.0%
-    """
-    base_nominal = 0.04
-    growth_signal = g_hist
-    if rev_cagr is not None and np.isfinite(rev_cagr):
-        growth_signal = max(g_hist, rev_cagr)
-    tg = 0.4 * base_nominal + 0.4 * clamp(rf, 0.02, 0.05) + 0.2 * clamp(growth_signal, 0.0, 0.08)
-
-    if margins is not None and np.isfinite(margins):
-        if margins > 0.25: tg += 0.003
-        elif margins < 0.10: tg -= 0.003
-
-    return clamp(tg, 0.02, 0.05)
-
-# ----------------- WACC path -----------------
-def build_wacc_path(base_beta: float, rf: float, mrp: float, cod_after_tax: float, info: dict, years: int):
-    E = max(safe(info.get("marketCap"), 0.0), 0.0)
-    D = max(safe(info.get("totalDebt"), 0.0), 0.0)
-    V0 = E + D if (E + D) > 0 else 1.0
-    wd0 = D / V0
-
-    is_mega = E >= 5e11
-    wd_target = clamp(wd0 * (0.90 if is_mega else 1.00), 0.0, 0.95)
-
-    waccs, coes, weights = [], [], []
-    for t in range(1, years + 1):
-        decay = 0.85 ** t
-        beta_t = 1.0 + (base_beta - 1.0) * decay
-        coe_t = clamp(rf + beta_t * mrp, 0.05, 0.16)
-
-        wd_t = clamp(wd0 + (wd_target - wd0) * (t / years), 0.0, 0.95)
-        we_t = clamp(1.0 - wd_t, 0.05, 0.99)
-
-        wacc_t = clamp(we_t * coe_t + wd_t * cod_after_tax, 0.05, 0.15)
-
-        waccs.append(wacc_t)
-        coes.append(coe_t)
-        weights.append({"we": we_t, "wd": wd_t, "beta_t": beta_t})
-
-    return waccs, coes, weights
-
-def discount_factors_varying_wacc(waccs: list[float], midyear: bool) -> list[float]:
-    dfs, cum = [], 1.0
-    for i, r in enumerate(waccs, start=1):
-        if i > 1:
-            cum *= 1.0 / (1.0 + waccs[i-2])
-        df = cum / ((1.0 + r) ** (0.5 if midyear else 1.0))
-        dfs.append(df)
-    return dfs
-
-def pv_with_varying_wacc(fcff: list[float], waccs: list[float], midyear: bool, terminal_growth: float):
-    dfs = discount_factors_varying_wacc(waccs, midyear)
-    pv_explicit = sum((fcff[i] * dfs[i]) for i in range(len(fcff)))
-    rN = waccs[-1]
-    tv = (fcff[-1] * (1.0 + terminal_growth)) / max(rN - terminal_growth, 1e-6)
-    disc_tv = 1.0
-    for r in waccs:
-        disc_tv *= 1.0 / (1.0 + r)
-    pv_tv = tv * disc_tv
-    return float(pv_explicit), float(pv_tv), float(tv), dfs
-
-# ----------------- ROIC-based FCFF path -----------------
 def estimate_roic_and_reinvestment(tkr: yf.Ticker) -> dict:
     fin_q, bs_q = tkr.quarterly_financials, tkr.quarterly_balance_sheet
 
@@ -466,7 +387,8 @@ def estimate_roic_and_reinvestment(tkr: yf.Ticker) -> dict:
         for lab in ["Ebit", "Operating Income"]:
             if lab in fin_q.index:
                 ebit_ttm = _qsum(_row(fin_q, lab), 4)
-                if np.isfinite(ebit_ttm): break
+                if np.isfinite(ebit_ttm):
+                    break
 
     ic = np.nan
     if bs_q is not None and not bs_q.empty:
@@ -478,7 +400,7 @@ def estimate_roic_and_reinvestment(tkr: yf.Ticker) -> dict:
 
     return {"nopat_ttm": ebit_ttm, "invested_capital": ic}
 
-def build_fcff_path_via_roic(fcff0: float, tax_rate: float, years: int, growth_path: list[float], tkr: yf.Ticker):
+def build_fcff_path_via_roic(fcff0: float, tax_rate: float, years: int, growth_path: List[float], tkr: yf.Ticker):
     est = estimate_roic_and_reinvestment(tkr)
     nopat0_raw = safe(est.get("nopat_ttm"), np.nan)
     ic = safe(est.get("invested_capital"), np.nan)
@@ -505,7 +427,6 @@ def build_fcff_path_via_roic(fcff0: float, tax_rate: float, years: int, growth_p
         fcff = [f * adj for f in fcff]
     return fcff
 
-# ----------------- snapshot / multiples ----------
 def compute_financials_snapshot(tkr: yf.Ticker, info: dict) -> dict:
     fin, bs, cf = tkr.financials, tkr.balance_sheet, tkr.cashflow
 
@@ -569,165 +490,281 @@ def compute_financials_snapshot(tkr: yf.Ticker, info: dict) -> dict:
         "revenue_cagr": rev_cagr
     }
 
-# ----------------- sensitivity grid -----------------
-def sensitivity_grid(fcff, wacc_base, tg_base, cash, debt, shares, midyear, step_wacc=0.015, step_tg=0.005):
+def sensitivity_grid(
+    fcff: List[float], wacc_base: float, tg_base: float, cash: float, debt: float, shares: float,
+    midyear: bool, step_wacc=0.015, step_tg=0.005
+) -> List[List[Optional[float]]]:
     rows = []
     for tg in [clamp(tg_base - step_tg, 0.01, 0.06), tg_base, clamp(tg_base + step_tg, 0.01, 0.06)]:
         row = []
         for w in [clamp(wacc_base - step_wacc, 0.03, 0.20), wacc_base, clamp(wacc_base + step_wacc, 0.03, 0.20)]:
-            res = dcf_valuation(
-                fcff=fcff, wacc=w, terminal_growth=tg, midyear=midyear,
-                cash=cash, debt=debt, shares_out=shares, extras=None
-            )
-            row.append(_clean_num(res.get("intrinsic_value_per_share")))
+            tg_adj = min(tg, w - 0.001) if (w - tg) <= 0.001 else tg
+            try:
+                res = dcf_valuation(
+                    fcff=fcff, wacc=w, terminal_growth=tg_adj, midyear=midyear,
+                    cash=cash, debt=debt, shares_out=shares, extras=None
+                )
+                row.append(_clean_num(res.get("intrinsic_value_per_share")))
+            except Exception:
+                row.append(None)
+        row = row
         rows.append(row)
     return rows
 
-# ----------------- API -----------------
+# ----------------------------------------------------------------------------
+# Dynamic assumptions
+# ----------------------------------------------------------------------------
+def fetch_company_assumptions(ticker: str) -> Dict[str, Any]:
+    t = yf.Ticker(ticker)
+    info = t.info or {}
+
+    rf_env = os.getenv("RF_RATE")
+    if rf_env is not None:
+        rf = safe(rf_env, 0.04)
+    else:
+        try:
+            tnx = yf.Ticker("^TNX").info or {}
+            rf = safe(tnx.get("regularMarketPrice"), 40.0) / 100.0
+        except Exception:
+            rf = 0.04
+    erp = safe(os.getenv("EQUITY_RISK_PREMIUM"), 0.055)
+
+    beta = safe(info.get("beta"), np.nan)
+    if not np.isfinite(beta):
+        try:
+            px = t.history(period="2y", interval="1wk")["Close"].pct_change().dropna()
+            mkt = yf.Ticker("SPY").history(period="2y", interval="1wk")["Close"].pct_change().dropna()
+            ri, rm = px.align(mkt, join="inner")
+            var_m = float(np.var(rm, ddof=1)) or 1e-8
+            cov_im = float(np.cov(ri, rm, ddof=1)[0, 1])
+            beta = clamp(cov_im / var_m, -1.0, 5.0)
+        except Exception:
+            beta = 1.0
+
+    fin = t.financials
+    cf  = t.cashflow
+    bs  = t.balance_sheet
+
+    interest_exp = None
+    if fin is not None and not fin.empty:
+        for k in ["Interest Expense", "InterestExpense", "Interest Expense Non Operating"]:
+            r = _row(fin, k)
+            if r is not None:
+                v = _qsum(r, 4)
+                if np.isfinite(v):
+                    interest_exp = abs(v)
+                    break
+
+    total_debt = safe(info.get("totalDebt"), np.nan)
+    avg_debt = safe(total_debt, 0.0)
+    if bs is not None and not bs.empty:
+        td_row = _row(bs, "Total Debt")
+        if td_row is not None:
+            vals = _series_vals(td_row, max_n=2)
+            if vals:
+                if len(vals) > 1:
+                    avg_debt = (safe(vals[0], 0.0) + safe(vals[1], 0.0)) / 2.0
+                else:
+                    avg_debt = safe(vals[0], 0.0)
+
+    rd_pretax = np.nan
+    if np.isfinite(interest_exp) and avg_debt > 1.0:
+        rd_pretax = clamp(interest_exp / avg_debt, 0.01, 0.12)
+    if not np.isfinite(rd_pretax):
+        rd_pretax = 0.04
+
+    eff_tax = compute_effective_tax_rate(t, {})
+
+    mktcap = safe(info.get("marketCap"), np.nan)
+    if np.isnan(mktcap) and FMP_API_KEY:
+        filled = enrich_with_fmp(info, ticker)
+        mktcap = safe(filled.get("marketCap"), mktcap)
+        info = filled
+
+    de_ratio = 0.3
+    if mktcap > 0:
+        de_ratio = clamp(safe(info.get("totalDebt"), 0.0) / mktcap, 0.0, 5.0)
+
+    sector = (info.get("sector") or "").lower()
+    if any(s in sector for s in ["utilities", "consumer defensive", "staples", "telecom"]):
+        tg = 0.025
+    elif any(s in sector for s in ["technology", "it", "semiconductor", "software"]):
+        tg = 0.035
+    else:
+        tg = 0.03
+    tg = clamp(tg, 0.01, 0.06)
+
+    return {
+        "company_name": info.get("longName") or info.get("shortName") or ticker.upper(),
+        "beta": beta,
+        "risk_free_rate": rf,
+        "equity_risk_premium": erp,
+        "cost_of_debt_pretax": rd_pretax,
+        "tax_rate": eff_tax,
+        "debt_to_equity": de_ratio,
+        "terminal_growth": tg,
+        "market_cap": mktcap if np.isfinite(mktcap) else None,
+        "total_debt": safe(info.get("totalDebt"), None),
+        "profile": f"{info.get('sector', 'Unknown')} / {info.get('industry', 'Unknown')}"
+    }
+
+def get_company_data(ticker: str) -> Dict[str, Any]:
+    ticker = ticker.upper()
+    dynamic_only = os.getenv("DCF_DYNAMIC_ONLY", "0") == "1"
+    if not dynamic_only and ticker in COMPANY_DATA:
+        return COMPANY_DATA[ticker]
+    return fetch_company_assumptions(ticker)
+
+# ----------------------------------------------------------------------------
+# Routes
+# ----------------------------------------------------------------------------
+
+@router.get("/health")
+def dcf_health():
+    return {"ok": True}
+
+@router.get("/company-data/{ticker}")
+async def get_company_parameters(ticker: str):
+    try:
+        data = get_company_data(ticker)
+        wacc, wacc_details = calculate_wacc_from_company_data(data)
+        return {
+            "ticker": ticker.upper(),
+            "company_name": data["company_name"],
+            "profile": data["profile"],
+            "wacc_calculated": round(wacc * 100, 2),
+            "parameters": data,
+            "wacc_breakdown": wacc_details
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/available-tickers")
+async def list_available_tickers():
+    return {
+        "available_tickers": list(COMPANY_DATA.keys()),
+        "count": len(COMPANY_DATA),
+        "companies": [
+            {
+                "ticker": ticker,
+                "name": data["company_name"],
+                "profile": data["profile"],
+                "beta": data["beta"],
+                "terminal_growth": data["terminal_growth"]
+            }
+            for ticker, data in COMPANY_DATA.items()
+        ]
+    }
+
+@router.get("/compare-assumptions")
+async def compare_company_assumptions(tickers: List[str] = Query(default=["AAPL", "TSLA", "KO"])):
+    try:
+        comparison = {}
+        for ticker in tickers:
+            data = get_company_data(ticker)
+            wacc, wacc_details = calculate_wacc_from_company_data(data)
+            comparison[ticker] = {
+                "company_name": data["company_name"],
+                "beta": data["beta"],
+                "wacc": round(wacc * 100, 2),
+                "cost_of_equity": round(wacc_details["cost_of_equity"] * 100, 2),
+                "terminal_growth": round(data["terminal_growth"] * 100, 2),
+                "debt_to_equity": data["debt_to_equity"],
+                "tax_rate": round(data["tax_rate"] * 100, 2),
+                "profile": data["profile"]
+            }
+        return {
+            "comparison": comparison,
+            "note": "WACC, Cost of Equity, Terminal Growth, and Tax Rate shown as percentages"
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 @router.get("/{ticker}")
 def get_dcf(
     ticker: str,
-    years: int = Query(10, ge=3, le=20, description="Forecast horizon (years)"),
-    midyear: bool = True,
-    terminal_growth: float | None = Query(None, description="Optional override, e.g. 0.035"),
-    debug: bool = False
+    years: int = Query(10, ge=3, le=20),
+    midyear: bool = Query(True),
+    terminal_growth_override: Optional[float] = Query(default=None),
+    wacc_override: Optional[float] = Query(default=None),
+    debug: bool = Query(False)
 ):
     try:
+        company_data = get_company_data(ticker)
+
         y = yf.Ticker(ticker)
         info = y.info or {}
 
-        # Capital inputs (base)
-        rf = fetch_risk_free_rate()
-        tax_rate = compute_effective_tax_rate(y)
-        beta, beta_diag = compute_beta(info, ticker)
-        mrp = market_risk_premium_with_size(info, base_mrp=0.0475)
-        coe = compute_cost_of_equity(rf, beta, mrp)
-        cod_after, cod_diag = compute_cost_of_debt_after_tax(y, tax_rate, rf)
-        wacc_base = compute_wacc(info, coe, cod_after)
+        if FMP_API_KEY:
+            info = enrich_with_fmp(info, ticker)
 
-        # FCFF starting level from statements (TTM)
-        fcff0, fcff_diag = fcff_from_statements(y, tax_rate)
+        if wacc_override is not None:
+            wacc_base = clamp(float(wacc_override), 0.03, 0.20)
+            wacc_details = {"source": "manual_override", "value": wacc_base}
+        else:
+            wacc_base, wacc_details = calculate_wacc_from_company_data(company_data)
 
-        # Growths
-        g = estimate_growths(y, years)
-        margins = safe(info.get("operatingMargins"), np.nan)
-        tg_auto = compute_terminal_growth_enhanced(rf, g["g_fcff_hist"], g["g_rev_cagr"], margins)
-        tg_used = clamp(float(terminal_growth), 0.01, 0.06) if terminal_growth is not None else tg_auto
+        if terminal_growth_override is not None:
+            tg_used = clamp(float(terminal_growth_override), 0.01, 0.06)
+            tg_source = "manual_override"
+        else:
+            tg_used = clamp(float(company_data["terminal_growth"]), 0.01, 0.06)
+            tg_source = "company_specific_database"
 
-        # Build FCFF path via ROIC model with smoothing
-        fcff = build_fcff_path_via_roic(fcff0, tax_rate, years, g["growth_path"], y)
+        eff_tax = compute_effective_tax_rate(y, company_data)
+        fcff0, fcff_diag = fcff_from_statements(y, eff_tax)
 
-        # Equity bridge
-        shares = safe(info.get("impliedSharesOutstanding") or info.get("sharesOutstanding"), 0.0)
-        debt = safe(info.get("totalDebt"), 0.0)
+        gr = estimate_growths(y, years, company_data)
+        fcff = build_fcff_path_via_roic(fcff0, eff_tax, years, gr["growth_path"], y)
+
         cash = compute_cash_like(info, y.balance_sheet)
-        if len(fcff) == 0 or fcff[0] == 0.0:
-            raise HTTPException(status_code=400, detail="Unable to build FCFF projections for this ticker.")
+        debt = safe(info.get("totalDebt"), 0.0)
+        shares = safe(info.get("impliedSharesOutstanding") or info.get("sharesOutstanding"), 0.0)
+        shares = max(shares, 1e-6)
 
-        # -------- BASE valuation
-        base = dcf_valuation(
-            fcff=fcff, wacc=wacc_base, terminal_growth=tg_used, midyear=midyear,
-            cash=cash, debt=debt, shares_out=shares,
-            extras={
-                "tax_rate": tax_rate,
-                "growth_rates": g["growth_path"],
-                "data_sources": [
-                    {"name": "Yahoo Finance (yfinance)", "fields": [
-                        "financials", "balance_sheet", "cashflow", "quarterly_financials",
-                        "quarterly_balance_sheet", "quarterly_cashflow",
-                        "marketCap", "totalDebt", "totalCash", "sharesOutstanding", "impliedSharesOutstanding",
-                        "beta", "operatingMargins", "trailingEps", "financialCurrency"
-                    ]},
-                    {"name": "Yahoo Finance ^TNX", "fields": ["10Y Treasury yield (risk-free rate)"]},
-                    {"name": "^GSPC", "fields": ["Market return series for historical beta"]},
-                ],
-                "disclaimer": "Educational DCF with automatic, ticker-specific assumptions derived from public data."
-            }
+        result = dcf_valuation(
+            fcff=fcff,
+            wacc=wacc_base,
+            terminal_growth=tg_used,
+            midyear=midyear,
+            cash=cash,
+            debt=debt,
+            shares_out=shares,
+            extras=None
         )
 
-        # -------- DYNAMIC valuation (time-dependent WACC)
-        waccs, coes_path, weights_path = build_wacc_path(beta, rf, mrp, cod_after, info, years)
-        pv_exp_dyn, pv_tv_dyn, tv_dyn, dfs_dyn = pv_with_varying_wacc(fcff, waccs, midyear, tg_used)
-        ev_dyn = pv_exp_dyn + pv_tv_dyn
-        eq_dyn = ev_dyn + cash - debt
-        ivps_dyn = (eq_dyn / shares) if shares else None
-
-        # -------- Sensitivity
-        sens_grid = sensitivity_grid(
-            fcff=fcff, wacc_base=wacc_base, tg_base=tg_used,
-            cash=cash, debt=debt, shares=shares, midyear=midyear,
-            step_wacc=0.015, step_tg=0.005
-        )
-
-        # Financials snapshot
+        grid = sensitivity_grid(fcff, wacc_base, tg_used, cash, debt, shares, midyear)
         snapshot = compute_financials_snapshot(y, info)
 
-        # Compose response
         out = {
             "ticker": ticker.upper(),
-            "valuation": {
-                "base_constant_wacc": {
-                    "enterprise_value": base["enterprise_value"],
-                    "equity_value": base["equity_value"],
-                    "intrinsic_value_per_share": base["intrinsic_value_per_share"],
-                    "pv_of_explicit_fcff": base["pv_of_explicit_fcff"],
-                    "pv_of_terminal_value": base["pv_of_terminal_value"],
-                    "terminal_value_at_horizon": base["terminal_value_at_horizon"],
-                    "discount_factors": base["discount_factors"],
-                },
-                "dynamic_wacc": {
-                    "enterprise_value": ev_dyn,
-                    "equity_value": eq_dyn,
-                    "intrinsic_value_per_share": ivps_dyn,
-                    "pv_of_explicit_fcff": pv_exp_dyn,
-                    "pv_of_terminal_value": pv_tv_dyn,
-                    "terminal_value_at_horizon": tv_dyn,
-                    "discount_factors": dfs_dyn,
-                    "wacc_path": waccs,
-                    "coe_path": coes_path,
-                    "weights_path": weights_path,
-                },
-                "sensitivity": {
-                    "grid_wacc_rows_tg_cols": sens_grid,
-                    "wacc_axis": [clamp(wacc_base - 0.015, 0.03, 0.2), wacc_base, clamp(wacc_base + 0.015, 0.03, 0.2)],
-                    "tg_axis": [clamp(tg_used - 0.005, 0.01, 0.06), tg_used, clamp(tg_used + 0.005, 0.01, 0.06)],
-                }
+            "company_name": company_data["company_name"],
+            "profile": company_data["profile"],
+            "inputs": {
+                "years": years,
+                "midyear": midyear,
+                "wacc": wacc_base,
+                "terminal_growth": tg_used,
+                "wacc_details": wacc_details,
+                "tg_source": tg_source,
+                "effective_tax_rate": eff_tax,
+                "cash": cash,
+                "debt": debt,
+                "shares_out": shares
             },
-            "assumptions": {
-                "risk_free_rate": rf,
-                "beta": beta,
-                "beta_details": beta_diag,
-                "market_risk_premium_used": mrp,
-                "cost_of_equity": coe,
-                "cost_of_debt_after_tax": cod_after,
-                "wacc_base": wacc_base,
-                "terminal_growth_used": tg_used,
-                "years_forecasted": years,
-                "operating_margins": safe(info.get("operatingMargins"), np.nan),
-                "effective_tax_rate": tax_rate,  # <— added for verification/UI
-                "growths": {
-                    "fcff_cagr_hist": g["g_fcff_hist"],
-                    "revenue_cagr": g["g_rev_cagr"],
-                    "projection_growth_path": g["growth_path"],
-                },
-                "fcff_start_method": fcff_diag,
-            },
+            "growth_estimates": gr,
             "fcff_projection": fcff,
-            "financials_snapshot": snapshot,
+            "dcf_result": _clean(result),
+            "sensitivity_grid": grid,
+            "financials_snapshot": _clean(snapshot),
         }
 
         if debug:
-            out["diagnostics"] = {
-                "cost_of_debt_method": cod_diag,
-                "wacc_weights_now": {
-                    "marketCap": safe(info.get("marketCap"), 0.0),
-                    "totalDebt": safe(info.get("totalDebt"), 0.0),
-                },
-            }
+            out["diagnostics"] = {"fcff": fcff_diag}
 
-        return _clean(out)
+        return out
 
-    except HTTPException:
-        raise
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"DCF computation failed: {str(e)}")

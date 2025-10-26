@@ -16,7 +16,7 @@ const About = () => {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-4">About InvestoMommy</h1>
           <p className="text-center text-muted-foreground mb-12">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Get to learn more about us.
           </p>
 
           <Card className="mb-12">
@@ -26,7 +26,8 @@ const About = () => {
                 <h2 className="text-2xl font-bold">Our Mission</h2>
               </div>
               <p className="text-lg">
-                To lower the barriers for beginner investors and to empower investors to take their first steps into investing and building their wealth.
+                To lower the barriers for beginner investors and to empower investors to take their first steps 
+                into investing and building their wealth through passive income.
               </p>
             </CardContent>
           </Card>

@@ -1,5 +1,5 @@
 // src/pages/StockAnalysis.tsx
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -112,7 +112,7 @@ async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | nu
     ] = await Promise.all([
       fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
+      fetch(`${API_BASE_URL}/api/research?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/news-sentiment?ticker=${encodeURIComponent(ticker)}`),
       fetch(`${API_BASE_URL}/overall-news-sentiment?ticker=${encodeURIComponent(ticker)}`),
     ]);
@@ -604,6 +604,21 @@ const StockAnalysis = () => {
           </div>
         </SheetContent>
       </Sheet>
+      {/* Deep Research CTA (bottom of the insight cards) */}
+        <div className="max-w-5xl mx-auto mt-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="py-6">
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-muted-foreground text-center">
+                  Want to go deeper? Run our LLM-assisted equity research for {ticker}.
+                </p>
+                <Button asChild>
+                  <Link to={`/research/${encodeURIComponent(ticker)}`}>Deep Research</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
     </div>
   );
 };

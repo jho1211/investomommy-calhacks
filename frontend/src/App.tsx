@@ -13,6 +13,7 @@ import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 import StockAnalysis from "./pages/StockAnalysis";
 import NotFound from "./pages/NotFound";
+import DeepResearch from "./pages/DeepResearch";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/dashboard/analysis/:ticker" element={<StockAnalysis />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/research/:ticker" element={<DeepResearch />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

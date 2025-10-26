@@ -135,46 +135,43 @@ const NewsAnalysis: React.FC<NewsAnalysisProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-2 space-y-2">
-            {newsSentiment.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No news available.</p>
-            ) : (
-              newsSentiment.map((item) => (
-                <Card key={item.id} className="bg-background/50">
-                  <CardContent className="pt-4">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {item.headline}
-                    </a>
-                    <p className="text-sm mt-1">
-                    <span className="text-muted-foreground">Sentiment: </span>
-                    <span
-                        className={`
-                        inline-flex items-center gap-1 px-2 py-0.5 rounded-md border
-                        ${sentimentBadgeClass(item.sentiment)}
-                        `}
-                    >
-                        <span className="capitalize text-xs font-semibold text-black">
-                        {item.sentiment}
-                        </span>
-                        {typeof item.confidence === "number" && (
-                        <span className="text-xs text-black">: {(item.confidence * 100).toFixed(0)}%</span>
-                        )}
-                    </span>
-                    </p>
+            <div className="mt-2 space-y-2">
+                {newsSentiment.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No news available.</p>
+                ) : (
+                    newsSentiment.map((item) => (
+                    <Card key={item.id} className="bg-background/50">
+                        <CardContent className="pt-4">
+                        <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-primary hover:underline"
+                        >
+                            {item.headline}
+                        </a>
+                        <p className="text-sm mt-1">
+                            <span className="text-muted-foreground">Sentiment: </span>
+                            <span
+                            className={`
+                                inline-flex items-center gap-1 px-2 py-0.5 rounded-md border
+                                ${sentimentBadgeClass(item.sentiment)}
+                            `}
+                            >
+                            <span className="capitalize text-xs font-semibold text-black">
+                                {item.sentiment}
+                            </span>
+                            </span>
+                        </p>
 
-                    {item.summary && (
-                      <p className="text-sm mt-2">{item.summary}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                        {item.summary && (
+                            <p className="text-sm mt-2">{item.summary}</p>
+                        )}
+                        </CardContent>
+                    </Card>
+                    ))
+                )}
+                </div>
         </DialogContent>
       </Dialog>
     </div>

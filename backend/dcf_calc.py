@@ -1,11 +1,5 @@
-#dcf_calc.py
 from typing import List, Optional, Dict, Any
-import math
 
-# ===========================
-# Company-specific assumptions
-# (Optional – router does not depend on these; kept for convenience)
-# ===========================
 COMPANY_DATA: Dict[str, Dict[str, Any]] = {
     "AAPL": {
         "beta": 1.25,

@@ -100,7 +100,7 @@ type AnalysisData = {
   overallNewsSentiment: OverallNewsSentiment | null; // <— was non-nullable
 };
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 async function fetchMultiplesForTicker(ticker: string): Promise<MultiplesData | null> {
   try {
@@ -207,7 +207,6 @@ const StockAnalysis = () => {
     fetchAnalysisForTicker(ticker).then((res) => {
       if (!active) return;
       setAnalysis(res);
-      console.log(res);
       setLoading(false);
     });
 
@@ -236,7 +235,6 @@ const StockAnalysis = () => {
       // fetch multiples for selected comparison ticker
       fetchMultiplesForTicker(selectedComparisonTicker).then((data) => {
         setComparisonTickerMultiples(data);
-        console.log(data);
       });
     }
   }, [ticker, selectedComparisonTicker, toast]);

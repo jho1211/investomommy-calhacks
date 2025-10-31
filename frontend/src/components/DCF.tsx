@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import SensitivityHeatMap from "./SensitivityHeatMap"; 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 type DcfResponse = {
   dcf_result?: {
@@ -23,7 +23,7 @@ function pct(n?: number | null) {
 }
 
 async function fetchDcf(ticker: string): Promise<DcfResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/dcf/${encodeURIComponent(ticker)}?years=10&midyear=true`);
+  const res = await fetch(`${API_BASE_URL}/dcf/${encodeURIComponent(ticker)}?years=10&midyear=true`);
   if (!res.ok) throw new Error(`DCF fetch failed: ${res.status}`);
   return res.json();
 }

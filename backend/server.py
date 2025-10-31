@@ -1,10 +1,11 @@
 import logging
 import traceback
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+import os
+import mimetypes
 
-# ---- your app code imports ----
 from model import (
     calculate_stock_multiples,
     run_monte_carlo,
@@ -16,8 +17,6 @@ from query import (
     fetch_news_sentiment,
     fetch_overall_news_sentiment,
 )
-
-# ---- DCF microservice router ----
 from dcf import router as dcf_router
 
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +26,8 @@ app = FastAPI(title="InvestoMommy API")
 
 origins = [
     "https://investomommy-calhacks.onrender.com",
+    "http://localhost:8000",
+    "http://localhost:8080"
 ]
 
 app.add_middleware(
@@ -37,8 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------- Health + error handling --------
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"ok": True}
 
@@ -52,17 +52,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 # -------- Your existing endpoints --------
-@app.get("/multiples")
+@app.get("/api/multiples")
 def get_multiples_for_stock(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return calculate_stock_multiples(ticker)
 
-@app.get("/userlist")
+@app.get("/api/userlist")
 def get_user_list(uid: str = Query(..., description="User ID")):
     return fetch_userlist(uid)
 
-@app.post("/userlist")
+@app.post("/api/userlist")
 def add_to_user_list(
     uid: str = Query(..., description="User ID"),
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
@@ -73,7 +73,7 @@ def add_to_user_list(
         logger.exception("Insert user ticker failed")
         return {"error": str(e)}
 
-@app.get("/montecarlo")
+@app.get("/api/montecarlo")
 async def montecarlo_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
     years_history: int = Query(5, ge=1, le=20),
@@ -94,7 +94,7 @@ async def montecarlo_endpoint(
         logger.exception("Monte Carlo failed")
         return JSONResponse(status_code=400, content={"error": str(e)})
 
-@app.get("/research")
+@app.get("/api/research")
 def research_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
@@ -104,23 +104,42 @@ def research_endpoint(
         logger.exception("Research generation failed")
         return {"error": str(e)}
 
-@app.get("/news-sentiment")
+@app.get("/api/news-sentiment")
 def news_sentiment_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return fetch_news_sentiment(ticker.upper())
 
-@app.get("/overall-news-sentiment")
+@app.get("/api/overall-news-sentiment")
 def overall_news_sentiment_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return fetch_overall_news_sentiment(ticker.upper())
 
-# -------- Mount the DCF microservice under a clear prefix --------
-# Your frontend should call `${API_BASE_URL}/api/dcf/...`
-app.include_router(dcf_router, prefix="/api/dcf", tags=["DCF"])
+app.include_router(dcf_router, prefix="/api", tags=["DCF"])
 
-# Optional: microservice health
-@app.get("/api/dcf/health")
-def dcf_health():
-    return {"ok": True}
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    """
+    Catch-all route to serve index.html for all non-API routes.
+    This allows React Router to handle client-side routing.
+    """
+    file_path = os.path.join("build", full_path)
+    
+    if os.path.isfile(file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
+        return FileResponse(
+            file_path,
+            media_type=mime_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    
+    index_path = os.path.join("build", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(
+            index_path,
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache"}
+        )
+    
+    return JSONResponse(status_code=404, content={"error": "Not found"})

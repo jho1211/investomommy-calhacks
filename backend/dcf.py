@@ -678,7 +678,7 @@ async def compare_company_assumptions(tickers: List[str] = Query(default=["AAPL"
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/{ticker}")
+@router.get("/dcf/{ticker}")
 def get_dcf(
     ticker: str,
     years: int = Query(10, ge=3, le=20),

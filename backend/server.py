@@ -1,8 +1,9 @@
 import logging
 import traceback
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # ---- your app code imports ----
 from model import (
@@ -27,6 +28,7 @@ app = FastAPI(title="InvestoMommy API")
 
 origins = [
     "https://investomommy-calhacks.onrender.com",
+    "http://localhost:8000",
 ]
 
 app.add_middleware(
@@ -38,7 +40,11 @@ app.add_middleware(
 )
 
 # -------- Health + error handling --------
-@app.get("/health")
+@app.get("/")
+def root():
+    return FileResponse("build/index.html")
+
+@app.get("/api/health")
 def health():
     return {"ok": True}
 
@@ -52,17 +58,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 # -------- Your existing endpoints --------
-@app.get("/multiples")
+@app.get("/api/multiples")
 def get_multiples_for_stock(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return calculate_stock_multiples(ticker)
 
-@app.get("/userlist")
+@app.get("/api/userlist")
 def get_user_list(uid: str = Query(..., description="User ID")):
     return fetch_userlist(uid)
 
-@app.post("/userlist")
+@app.post("/api/userlist")
 def add_to_user_list(
     uid: str = Query(..., description="User ID"),
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
@@ -73,7 +79,7 @@ def add_to_user_list(
         logger.exception("Insert user ticker failed")
         return {"error": str(e)}
 
-@app.get("/montecarlo")
+@app.get("/api/montecarlo")
 async def montecarlo_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
     years_history: int = Query(5, ge=1, le=20),
@@ -94,7 +100,7 @@ async def montecarlo_endpoint(
         logger.exception("Monte Carlo failed")
         return JSONResponse(status_code=400, content={"error": str(e)})
 
-@app.get("/research")
+@app.get("/api/research")
 def research_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
@@ -104,13 +110,13 @@ def research_endpoint(
         logger.exception("Research generation failed")
         return {"error": str(e)}
 
-@app.get("/news-sentiment")
+@app.get("/api/news-sentiment")
 def news_sentiment_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
     return fetch_news_sentiment(ticker.upper())
 
-@app.get("/overall-news-sentiment")
+@app.get("/api/overall-news-sentiment")
 def overall_news_sentiment_endpoint(
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
 ):
@@ -118,9 +124,11 @@ def overall_news_sentiment_endpoint(
 
 # -------- Mount the DCF microservice under a clear prefix --------
 # Your frontend should call `${API_BASE_URL}/api/dcf/...`
-app.include_router(dcf_router, prefix="/api/dcf", tags=["DCF"])
+app.include_router(dcf_router, prefix="/api", tags=["DCF"])
 
 # Optional: microservice health
 @app.get("/api/dcf/health")
 def dcf_health():
     return {"ok": True}
+
+app.mount("/", StaticFiles(directory="build"), name="static")

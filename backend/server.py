@@ -3,9 +3,9 @@ import traceback
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+import os
+import mimetypes
 
-# ---- your app code imports ----
 from model import (
     calculate_stock_multiples,
     run_monte_carlo,
@@ -17,8 +17,6 @@ from query import (
     fetch_news_sentiment,
     fetch_overall_news_sentiment,
 )
-
-# ---- DCF microservice router ----
 from dcf import router as dcf_router
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +27,7 @@ app = FastAPI(title="InvestoMommy API")
 origins = [
     "https://investomommy-calhacks.onrender.com",
     "http://localhost:8000",
+    "http://localhost:8080"
 ]
 
 app.add_middleware(
@@ -38,11 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# -------- Health + error handling --------
-@app.get("/")
-def root():
-    return FileResponse("build/index.html")
 
 @app.get("/api/health")
 def health():
@@ -122,13 +116,30 @@ def overall_news_sentiment_endpoint(
 ):
     return fetch_overall_news_sentiment(ticker.upper())
 
-# -------- Mount the DCF microservice under a clear prefix --------
-# Your frontend should call `${API_BASE_URL}/api/dcf/...`
 app.include_router(dcf_router, prefix="/api", tags=["DCF"])
 
-# Optional: microservice health
-@app.get("/api/dcf/health")
-def dcf_health():
-    return {"ok": True}
-
-app.mount("/", StaticFiles(directory="build"), name="static")
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    """
+    Catch-all route to serve index.html for all non-API routes.
+    This allows React Router to handle client-side routing.
+    """
+    file_path = os.path.join("build", full_path)
+    
+    if os.path.isfile(file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
+        return FileResponse(
+            file_path,
+            media_type=mime_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    
+    index_path = os.path.join("build", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(
+            index_path,
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache"}
+        )
+    
+    return JSONResponse(status_code=404, content={"error": "Not found"})

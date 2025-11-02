@@ -1,10 +1,11 @@
 import logging
 import traceback
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import mimetypes
+from auth import verify_token
 
 from model import (
     calculate_stock_multiples,
@@ -54,18 +55,23 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # -------- Your existing endpoints --------
 @app.get("/api/multiples")
 def get_multiples_for_stock(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return calculate_stock_multiples(ticker)
 
 @app.get("/api/userlist")
-def get_user_list(uid: str = Query(..., description="User ID")):
+def get_user_list(
+    uid: str = Query(..., description="User ID"),
+    user: dict = Depends(verify_token)
+):
     return fetch_userlist(uid)
 
 @app.post("/api/userlist")
 def add_to_user_list(
     uid: str = Query(..., description="User ID"),
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     try:
         return insert_user_ticker(uid, ticker)
@@ -80,6 +86,7 @@ async def montecarlo_endpoint(
     horizon_years: float = Query(1.0, gt=0),
     steps_per_year: int = Query(252, ge=50, le=2000),
     n_paths: int = Query(1000, ge=100, le=20000),
+    user: dict = Depends(verify_token)
 ):
     try:
         result = run_monte_carlo(
@@ -96,7 +103,8 @@ async def montecarlo_endpoint(
 
 @app.get("/api/research")
 def research_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     try:
         return generate_research_brief(ticker)
@@ -106,13 +114,15 @@ def research_endpoint(
 
 @app.get("/api/news-sentiment")
 def news_sentiment_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return fetch_news_sentiment(ticker.upper())
 
 @app.get("/api/overall-news-sentiment")
 def overall_news_sentiment_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return fetch_overall_news_sentiment(ticker.upper())
 

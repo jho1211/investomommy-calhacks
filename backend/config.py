@@ -15,6 +15,7 @@ LAVA_BASE_URL = os.getenv("LAVA_BASE_URL")
 LLM_API_URL = os.getenv("LLM_API_URL")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5-nano")
 LAVA_API_URL = f"{LAVA_BASE_URL}/forward?u={LLM_API_URL}"
+JWKS_URL = os.getenv("JWKS_URL")
 
 if FMP_API_KEY is None:
     raise ValueError("FMP_API_KEY not found in environment variables")
@@ -36,6 +37,8 @@ if LLM_API_URL is None:
     raise ValueError("LLM_API_URL not found in environment variables")
 if LLM_MODEL is None:
     raise ValueError("LLM_MODEL not found in environment variables")
+if JWKS_URL is None:
+    raise ValueError("JWKS_URL not found in environment variables")
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")

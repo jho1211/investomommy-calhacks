@@ -3,6 +3,8 @@ fastapi==0.120.0
 uvicorn==0.38.0
 python-dotenv==1.1.1
 python-multipart==0.0.20
+python-jose == 3.5.0
+cachetools == 6.2.1
 
 # Supabase client
 supabase==2.22.2

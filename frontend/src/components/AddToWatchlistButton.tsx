@@ -3,23 +3,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
 
 interface AddToWatchlistButtonProps {
   ticker: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-
 async function addToWatchlist(uid: string, ticker: string): Promise<boolean> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/userlist?uid=${encodeURIComponent(uid)}&ticker=${encodeURIComponent(
-        ticker.toUpperCase()
-      )}`,
-      { method: "POST" } // no body needed if FastAPI is reading from query params
-    );
-
-    return response.ok;
+    // Using axios - it automatically includes the Bearer token via interceptor
+    await api.post(`/userlist`, null, {
+      params: { 
+        uid, 
+        ticker: ticker.toUpperCase() 
+      }
+    });
+    return true;
   } catch (error) {
     console.error("Error adding to watchlist:", error);
     return false;

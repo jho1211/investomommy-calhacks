@@ -13,6 +13,8 @@ import AddToWatchlistButton from "@/components/AddToWatchlistButton";
 import { MonteCarloChart } from "@/components/MonteCarloChart";
 import NewsAnalysis from "@/components/NewsAnalysis";
 import DCF from "@/components/DCF";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 type DetailType = "relative" | "absolute" | "montecarlo" | "sentiment" | null;
 
@@ -100,67 +102,42 @@ type AnalysisData = {
   overallNewsSentiment: OverallNewsSentiment | null; // <— was non-nullable
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-
 async function fetchMultiplesForTicker(ticker: string): Promise<MultiplesData | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`);
-    if (response.ok) {
-      return await response.json();
-    }
+    // Using axios - it automatically includes the Bearer token via interceptor
+    const response = await api.get(`/multiples`, {
+      params: { ticker }
+    });
+    return response.data;
   } catch (error) {
     console.error("Error fetching multiples data:", error);
+    return null;
   }
-  return null;
 }
 
 async function fetchAnalysisForTicker(ticker: string): Promise<AnalysisData | null> {
   try {
-    // Fetch all data in parallel
+    // Fetch all data in parallel using axios
     const [
       multiplesResponse, 
       montecarloResponse, 
       researchResponse,
       newsSentimentResponse,
       overallNewsSentimentResponse,
-    ] = await Promise.all([
-      fetch(`${API_BASE_URL}/multiples?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/montecarlo?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/news-sentiment?ticker=${encodeURIComponent(ticker)}`),
-      fetch(`${API_BASE_URL}/overall-news-sentiment?ticker=${encodeURIComponent(ticker)}`),
+    ] = await Promise.allSettled([
+      api.get(`/multiples`, { params: { ticker } }),
+      api.get(`/montecarlo`, { params: { ticker } }),
+      api.get(`/research`, { params: { ticker } }),
+      api.get(`/news-sentiment`, { params: { ticker } }),
+      api.get(`/overall-news-sentiment`, { params: { ticker } }),
     ]);
 
-    let multiples: MultiplesData | null = null;
-    let montecarlo: MonteCarloData | null = null;
-    let research: ResearchData | null = null;
-    let newsSentiment: NewsSentimentItem[] = [];
-    let overallNewsSentiment: OverallNewsSentiment | null = null;
-
-    // Parse multiples data if successful
-    if (multiplesResponse.ok) {
-      multiples = await multiplesResponse.json();
-    }
-
-    // Parse monte carlo data if successful
-    if (montecarloResponse.ok) {
-      montecarlo = await montecarloResponse.json();
-    }
-
-    // Parse research data if successful
-    if (researchResponse.ok) {
-      research = await researchResponse.json();
-    }
-
-    // Parse news sentiment data if successful
-    if (newsSentimentResponse.ok) {
-      newsSentiment = await newsSentimentResponse.json();
-    }
-
-    // Parse overall news sentiment data if successful
-    if (overallNewsSentimentResponse.ok) {
-      overallNewsSentiment = await overallNewsSentimentResponse.json();
-    }
+    // Extract data from successful responses
+    const multiples = multiplesResponse.status === 'fulfilled' ? multiplesResponse.value.data : null;
+    const montecarlo = montecarloResponse.status === 'fulfilled' ? montecarloResponse.value.data : null;
+    const research = researchResponse.status === 'fulfilled' ? researchResponse.value.data : null;
+    const newsSentiment = newsSentimentResponse.status === 'fulfilled' ? newsSentimentResponse.value.data : [];
+    const overallNewsSentiment = overallNewsSentimentResponse.status === 'fulfilled' ? overallNewsSentimentResponse.value.data : null;
 
     // Return analysis data even if one or more endpoints fail
     // This allows partial data to be displayed

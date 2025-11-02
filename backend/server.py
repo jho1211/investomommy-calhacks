@@ -3,6 +3,7 @@ import traceback
 from fastapi import FastAPI, Query, Request, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 import os
 import mimetypes
 from auth import verify_token
@@ -19,11 +20,16 @@ from query import (
     fetch_overall_news_sentiment,
 )
 from dcf import router as dcf_router
+from config import supabase
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("investomommy")
 
-app = FastAPI(title="InvestoMommy API")
+app = FastAPI(
+    title="InvestoMommy API",
+    description="Investment analysis API with Supabase authentication",
+    version="1.0.0"
+)
 
 origins = [
     "https://investomommy-calhacks.onrender.com",
@@ -42,6 +48,36 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     return {"ok": True}
+
+@app.post("/api/auth/get-token")
+def get_test_token(
+        email: str = Query(..., description="User email"), 
+        password: str = Query(..., description="User password")
+    ):
+    try:
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        
+        if response.session:
+            return {
+                "access_token": response.session.access_token,
+                "token_type": "bearer",
+                "expires_at": response.session.expires_at,
+                "user_id": response.user.id if response.user else None,
+            }
+        else:
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Invalid credentials"}
+            )
+    except Exception as e:
+        logger.exception("Test token generation failed")
+        return JSONResponse(
+            status_code=400,
+            content={"error": str(e)}
+        )
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):

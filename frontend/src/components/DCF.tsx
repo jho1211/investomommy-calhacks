@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SensitivityHeatMap from "./SensitivityHeatMap"; 
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+import api from "@/lib/api";
 
 type DcfResponse = {
   dcf_result?: {
@@ -23,9 +22,11 @@ function pct(n?: number | null) {
 }
 
 async function fetchDcf(ticker: string): Promise<DcfResponse> {
-  const res = await fetch(`${API_BASE_URL}/dcf/${encodeURIComponent(ticker)}?years=10&midyear=true`);
-  if (!res.ok) throw new Error(`DCF fetch failed: ${res.status}`);
-  return res.json();
+  // Using axios - it automatically includes the Bearer token via interceptor
+  const response = await api.get(`/dcf/${encodeURIComponent(ticker)}`, {
+    params: { years: 10, midyear: true }
+  });
+  return response.data;
 }
 
 export default function DCF({ ticker }: { ticker: string }) {

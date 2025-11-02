@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Newspaper } from "lucide-react";
+import api from "@/lib/api";
 
 type ResearchData = {
   analysis_date: string;
@@ -22,8 +23,6 @@ type ResearchData = {
   };
   created_at: string;
 };
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 export default function DeepResearch() {
   const params = useParams<{ ticker?: string }>();
@@ -43,19 +42,11 @@ export default function DeepResearch() {
     setError(null);
     setResearch(null);
 
-    const url = `${API_BASE_URL}/research?ticker=${encodeURIComponent(ticker)}`;
-
-    fetch(url)
-      .then(async (r) => {
-        if (!r.ok) {
-          const t = await r.text();
-          throw new Error(t || `Request failed (${r.status})`);
-        }
-        return r.json();
-      })
-      .then((json: ResearchData) => {
+    // Using axios - it automatically includes the Bearer token via interceptor
+    api.get(`/research`, { params: { ticker } })
+      .then((response) => {
         if (!active) return;
-        setResearch(json);
+        setResearch(response.data);
       })
       .catch((e) => {
         if (!active) return;

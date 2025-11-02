@@ -1,10 +1,12 @@
 import logging
 import traceback
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 import os
 import mimetypes
+from auth import verify_token
 
 from model import (
     calculate_stock_multiples,
@@ -18,11 +20,16 @@ from query import (
     fetch_overall_news_sentiment,
 )
 from dcf import router as dcf_router
+from config import supabase
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("investomommy")
 
-app = FastAPI(title="InvestoMommy API")
+app = FastAPI(
+    title="InvestoMommy API",
+    description="Investment analysis API with Supabase authentication",
+    version="1.0.0"
+)
 
 origins = [
     "https://investomommy-calhacks.onrender.com",
@@ -42,6 +49,36 @@ app.add_middleware(
 def health():
     return {"ok": True}
 
+@app.post("/api/auth/get-token")
+def get_test_token(
+        email: str = Query(..., description="User email"), 
+        password: str = Query(..., description="User password")
+    ):
+    try:
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        
+        if response.session:
+            return {
+                "access_token": response.session.access_token,
+                "token_type": "bearer",
+                "expires_at": response.session.expires_at,
+                "user_id": response.user.id if response.user else None,
+            }
+        else:
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Invalid credentials"}
+            )
+    except Exception as e:
+        logger.exception("Test token generation failed")
+        return JSONResponse(
+            status_code=400,
+            content={"error": str(e)}
+        )
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled error on %s %s\n%s",
@@ -54,18 +91,23 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # -------- Your existing endpoints --------
 @app.get("/api/multiples")
 def get_multiples_for_stock(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return calculate_stock_multiples(ticker)
 
 @app.get("/api/userlist")
-def get_user_list(uid: str = Query(..., description="User ID")):
+def get_user_list(
+    uid: str = Query(..., description="User ID"),
+    user: dict = Depends(verify_token)
+):
     return fetch_userlist(uid)
 
 @app.post("/api/userlist")
 def add_to_user_list(
     uid: str = Query(..., description="User ID"),
     ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     try:
         return insert_user_ticker(uid, ticker)
@@ -80,6 +122,7 @@ async def montecarlo_endpoint(
     horizon_years: float = Query(1.0, gt=0),
     steps_per_year: int = Query(252, ge=50, le=2000),
     n_paths: int = Query(1000, ge=100, le=20000),
+    user: dict = Depends(verify_token)
 ):
     try:
         result = run_monte_carlo(
@@ -96,7 +139,8 @@ async def montecarlo_endpoint(
 
 @app.get("/api/research")
 def research_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     try:
         return generate_research_brief(ticker)
@@ -106,13 +150,15 @@ def research_endpoint(
 
 @app.get("/api/news-sentiment")
 def news_sentiment_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return fetch_news_sentiment(ticker.upper())
 
 @app.get("/api/overall-news-sentiment")
 def overall_news_sentiment_endpoint(
-    ticker: str = Query(..., description="Stock ticker, e.g., AAPL")
+    ticker: str = Query(..., description="Stock ticker, e.g., AAPL"),
+    user: dict = Depends(verify_token)
 ):
     return fetch_overall_news_sentiment(ticker.upper())
 
